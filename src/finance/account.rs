@@ -9,8 +9,6 @@ pub enum FinanceAccountType {
 #[derive(Debug, PartialEq)]
 pub enum FinanceAccountError {
     InvalidAmount,
-    AccountArchived,
-    InsufficientFunds,
 }
 
 impl FinanceAccountType {
@@ -126,6 +124,9 @@ mod tests {
         );
         let result = account.deposit(-1000);
         assert!(result.is_err());
+
+        let balance = account.balance_in_cents();
+        assert_eq!(balance, 0);
     }
 
     #[test]
