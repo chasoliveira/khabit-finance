@@ -28,7 +28,7 @@ pub struct FinanceAccount {
 }
 
 impl FinanceAccount {
-    fn new(id: String, name: String, account_type: FinanceAccountType) -> Self {
+    pub fn new(id: String, name: String, account_type: FinanceAccountType) -> Self {
         FinanceAccount {
             id,
             name,
@@ -38,6 +38,18 @@ impl FinanceAccount {
             balance_in_cents: 0,
             is_archived: false,
         }
+    }
+
+    pub fn get_id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn get_balance_in_cents(&self) -> i64 {
+        self.balance_in_cents
     }
 }
 
@@ -67,12 +79,12 @@ mod tests {
             FinanceAccountType::Checking,
         );
 
-        assert_eq!(account.id, "1");
-        assert_eq!(account.name, "My Checking Account");
+        assert_eq!(account.get_id(), "1");
+        assert_eq!(account.get_name(), "My Checking Account");
         assert_eq!(account.account_type, FinanceAccountType::Checking);
         assert_eq!(account.institution_name.as_deref(), None);
         assert_eq!(account.description.as_deref(), None);
-        assert_eq!(account.balance_in_cents, 0);
+        assert_eq!(account.get_balance_in_cents(), 0);
         assert!(!account.is_archived);
     }
 }
