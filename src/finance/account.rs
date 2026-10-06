@@ -6,6 +6,13 @@ pub enum FinanceAccountType {
     Investment,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum FinanceAccountError {
+    InvalidAmount,
+    AccountArchived,
+    InsufficientFunds,
+}
+
 impl FinanceAccountType {
     pub fn is_spendable(&self) -> bool {
         match self {
@@ -52,9 +59,9 @@ impl FinanceAccount {
         self.balance_in_cents
     }
 
-    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), String> {
+    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
         if amount_in_cents <= 0 {
-            Err("Deposit amount must be positive and greater than zero".to_string())
+            Err(FinanceAccountError::InvalidAmount)
         } else {
             self.balance_in_cents += amount_in_cents;
             Ok(())
@@ -128,11 +135,12 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
+
         let result = account.deposit(0);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            "Deposit amount must be positive and greater than zero"
-        );
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+
+        let balance = account.balance_in_cents();
+        assert_eq!(balance, 0);
     }
 }
