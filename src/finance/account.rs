@@ -124,6 +124,7 @@ mod tests {
         );
         let result = account.deposit(-1000);
         assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
 
         let balance = account.balance_in_cents();
         assert_eq!(balance, 0);
