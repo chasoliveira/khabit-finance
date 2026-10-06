@@ -52,14 +52,13 @@ impl FinanceAccount {
         self.balance_in_cents
     }
 
-    pub fn deposit(&mut self, amount_in_cents: i64) {
-        if amount_in_cents < 0 {
-            panic!("Deposit amount must be positive")
+    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), String> {
+        if amount_in_cents <= 0 {
+            Err("Deposit amount must be positive and greater than zero".to_string())
+        } else {
+            self.balance_in_cents += amount_in_cents;
+            Ok(())
         }
-        if amount_in_cents == 0 {
-            panic!("Deposit amount must be greater than zero")
-        }
-        self.balance_in_cents += amount_in_cents;
     }
 }
 
@@ -106,30 +105,34 @@ mod tests {
             FinanceAccountType::Checking,
         );
 
-        account.deposit(1000);
-        account.deposit(1000);
-        assert_eq!(account.balance_in_cents(), 2000);
+        let result = account.deposit(1000);
+        assert!(result.is_ok());
+        assert_eq!(account.balance_in_cents(), 1000);
     }
 
     #[test]
-    #[should_panic(expected = "Deposit amount must be positive")]
     fn test_account_deposit_negative() {
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(-1000);
+        let result = account.deposit(-1000);
+        assert!(result.is_err());
     }
 
     #[test]
-    #[should_panic(expected = "Deposit amount must be greater than zero")]
     fn test_account_deposit_zero() {
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(0);
+        let result = account.deposit(0);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Deposit amount must be positive and greater than zero"
+        );
     }
 }
