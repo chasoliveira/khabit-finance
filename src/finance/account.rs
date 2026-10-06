@@ -6,6 +6,17 @@ pub enum FinanceAccountType {
     Investment,
 }
 
+impl FinanceAccountType {
+    pub fn is_spendable(&self) -> bool {
+        match self {
+            FinanceAccountType::Cash => true,
+            FinanceAccountType::Checking => true,
+            FinanceAccountType::Savings => false,
+            FinanceAccountType::Investment => false,
+        }
+    }
+}
+
 pub struct FinanceAccount {
     id: String,
     name: String,
@@ -16,13 +27,24 @@ pub struct FinanceAccount {
     is_archived: bool,
 }
 
-impl FinanceAccountType {
-    pub fn is_spendable(&self) -> bool {
-        match self {
-            FinanceAccountType::Cash => true,
-            FinanceAccountType::Checking => true,
-            FinanceAccountType::Savings => false,
-            FinanceAccountType::Investment => false,
+impl FinanceAccount {
+    fn new(
+        id: String,
+        name: String,
+        account_type: FinanceAccountType,
+        institution_name: Option<String>,
+        description: Option<String>,
+        balance_in_cents: i64,
+        is_archived: bool,
+    ) -> Self {
+        FinanceAccount {
+            id,
+            name,
+            account_type,
+            institution_name,
+            description,
+            balance_in_cents,
+            is_archived,
         }
     }
 }
@@ -47,15 +69,15 @@ mod tests {
 
     #[test]
     fn test_account_creation() {
-        let account = FinanceAccount {
-            id: "1".to_string(),
-            name: "My Checking Account".to_string(),
-            account_type: FinanceAccountType::Checking,
-            institution_name: Some("Bank of Rust".to_string()),
-            description: Some("Primary checking account".to_string()),
-            balance_in_cents: 100_00, // $100.00
-            is_archived: false,
-        };
+        let account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+            Some("Bank of Rust".to_string()),
+            Some("Primary checking account".to_string()),
+            100_00, // $100.00
+            false,
+        );
 
         assert_eq!(account.id, "1");
         assert_eq!(account.name, "My Checking Account");
