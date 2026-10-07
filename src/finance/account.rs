@@ -9,6 +9,7 @@ pub enum FinanceAccountType {
 #[derive(Debug, PartialEq)]
 pub enum FinanceAccountError {
     InvalidAmount,
+    InsufficientFunds,
 }
 
 impl FinanceAccountType {
@@ -62,6 +63,17 @@ impl FinanceAccount {
             Err(FinanceAccountError::InvalidAmount)
         } else {
             self.balance_in_cents += amount_in_cents;
+            Ok(())
+        }
+    }
+
+    pub fn withdraw(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+        if amount_in_cents <= 0 {
+            Err(FinanceAccountError::InvalidAmount)
+        } else if self.balance_in_cents < amount_in_cents {
+            Err(FinanceAccountError::InsufficientFunds)
+        } else {
+            self.balance_in_cents -= amount_in_cents;
             Ok(())
         }
     }
@@ -144,5 +156,64 @@ mod tests {
 
         let balance = account.balance_in_cents();
         assert_eq!(balance, 0);
+    }
+
+    #[test]
+    fn test_account_withdraw() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let result = account.withdraw(500);
+        assert!(result.is_ok());
+        assert_eq!(account.balance_in_cents(), 500);
+    }
+
+    #[test]
+    fn test_account_withdraw_insufficient_funds() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let result = account.withdraw(1500);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InsufficientFunds);
+        assert_eq!(account.balance_in_cents(), 1000);
+    }
+
+    #[test]
+    fn test_account_withdraw_negative() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let result = account.withdraw(-500);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+        assert_eq!(account.balance_in_cents(), 1000);
+    }
+
+    #[test]
+    fn test_account_withdraw_zero() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let result = account.withdraw(0);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+        assert_eq!(account.balance_in_cents(), 1000);
     }
 }
