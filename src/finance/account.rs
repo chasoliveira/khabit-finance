@@ -10,6 +10,7 @@ pub enum FinanceAccountType {
 pub enum FinanceAccountError {
     InvalidAmount,
     InsufficientFunds,
+    AccountArchived,
 }
 
 impl FinanceAccountType {
@@ -59,6 +60,9 @@ impl FinanceAccount {
     }
 
     pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+        if self.is_archived {
+            return Err(FinanceAccountError::AccountArchived);
+        }
         if amount_in_cents <= 0 {
             Err(FinanceAccountError::InvalidAmount)
         } else {
@@ -68,6 +72,9 @@ impl FinanceAccount {
     }
 
     pub fn withdraw(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+        if self.is_archived {
+            return Err(FinanceAccountError::AccountArchived);
+        }
         if amount_in_cents <= 0 {
             Err(FinanceAccountError::InvalidAmount)
         } else if self.balance_in_cents < amount_in_cents {
@@ -76,6 +83,14 @@ impl FinanceAccount {
             self.balance_in_cents -= amount_in_cents;
             Ok(())
         }
+    }
+
+    pub fn archive(&mut self) {
+        self.is_archived = true;
+    }
+
+    pub fn is_archived(&self) -> bool {
+        self.is_archived
     }
 }
 
@@ -111,7 +126,7 @@ mod tests {
         assert_eq!(account.institution_name.as_deref(), None);
         assert_eq!(account.description.as_deref(), None);
         assert_eq!(account.balance_in_cents(), 0);
-        assert!(!account.is_archived);
+        assert!(!account.is_archived());
     }
 
     #[test]
@@ -125,6 +140,23 @@ mod tests {
         let result = account.deposit(1000);
         assert!(result.is_ok());
         assert_eq!(account.balance_in_cents(), 1000);
+    }
+
+    #[test]
+    fn test_account_archived_deposit() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.archive();
+
+        let result = account.deposit(1000);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
+
+        assert_eq!(account.balance_in_cents(), 0);
+        assert!(account.is_archived());
     }
 
     #[test]
@@ -170,6 +202,22 @@ mod tests {
         let result = account.withdraw(500);
         assert!(result.is_ok());
         assert_eq!(account.balance_in_cents(), 500);
+    }
+
+    #[test]
+    fn test_account_withdraw_archived() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.archive();
+
+        let result = account.withdraw(500);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
+        assert_eq!(account.balance_in_cents(), 0);
+        assert!(account.is_archived());
     }
 
     #[test]
