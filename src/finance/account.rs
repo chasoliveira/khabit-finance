@@ -15,9 +15,9 @@ pub enum FinanceAccountError {
 
 pub enum FinanceAccountOutcome {
     Success(i64),
-    InvalidAmount(String),
-    InsufficientFunds(String),
-    AccountArchived(String),
+    InvalidAmount,
+    InsufficientFunds,
+    AccountArchived,
 }
 
 pub fn withdraw_from_account(
@@ -26,15 +26,9 @@ pub fn withdraw_from_account(
 ) -> FinanceAccountOutcome {
     match account.withdraw(amount_in_cents) {
         Ok(()) => FinanceAccountOutcome::Success(account.balance_in_cents()),
-        Err(FinanceAccountError::InvalidAmount) => {
-            FinanceAccountOutcome::InvalidAmount("Invalid amount for withdrawal.".to_string())
-        }
-        Err(FinanceAccountError::InsufficientFunds) => FinanceAccountOutcome::InsufficientFunds(
-            "Insufficient funds for withdrawal.".to_string(),
-        ),
-        Err(FinanceAccountError::AccountArchived) => FinanceAccountOutcome::AccountArchived(
-            "Cannot withdraw from archived account.".to_string(),
-        ),
+        Err(FinanceAccountError::InvalidAmount) => FinanceAccountOutcome::InvalidAmount,
+        Err(FinanceAccountError::InsufficientFunds) => FinanceAccountOutcome::InsufficientFunds,
+        Err(FinanceAccountError::AccountArchived) => FinanceAccountOutcome::AccountArchived,
     }
 }
 
@@ -359,10 +353,7 @@ mod tests {
         account.deposit(1000).unwrap();
 
         let result = withdraw_from_account(&mut account, 1500);
-        assert!(matches!(
-            result,
-            FinanceAccountOutcome::InsufficientFunds(_)
-        ));
+        assert!(matches!(result, FinanceAccountOutcome::InsufficientFunds));
         assert_eq!(account.balance_in_cents(), 1000);
     }
 
@@ -376,7 +367,7 @@ mod tests {
         account.deposit(1000).unwrap();
 
         let result = withdraw_from_account(&mut account, -500);
-        assert!(matches!(result, FinanceAccountOutcome::InvalidAmount(_)));
+        assert!(matches!(result, FinanceAccountOutcome::InvalidAmount));
         assert_eq!(account.balance_in_cents(), 1000);
     }
 
@@ -391,7 +382,7 @@ mod tests {
         account.archive();
 
         let result = withdraw_from_account(&mut account, 500);
-        assert!(matches!(result, FinanceAccountOutcome::AccountArchived(_)));
+        assert!(matches!(result, FinanceAccountOutcome::AccountArchived));
         assert_eq!(account.balance_in_cents(), 1000);
     }
 }
