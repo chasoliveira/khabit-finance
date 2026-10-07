@@ -15,32 +15,30 @@ pub enum FinanceAccountError {
 
 pub fn withdraw_from_account(account: &mut FinanceAccount, amount_in_cents: i64) -> String {
     match account.withdraw(amount_in_cents) {
-        Ok(_) => format!(
+        Ok(()) => format!(
             "Successfully withdrew {} cents from account {}.",
             amount_in_cents,
             account.name()
         ),
-        Err(e) => match e {
-            FinanceAccountError::InvalidAmount => {
-                format!(
-                    "Error: Invalid amount {} cents for withdrawal.",
-                    amount_in_cents
-                )
-            }
-            FinanceAccountError::InsufficientFunds => {
-                format!(
-                    "Error: Insufficient funds in account {} for withdrawal of {} cents.",
-                    account.name(),
-                    amount_in_cents
-                )
-            }
-            FinanceAccountError::AccountArchived => {
-                format!(
-                    "Error: Cannot withdraw from archived account {}.",
-                    account.name()
-                )
-            }
-        },
+        Err(FinanceAccountError::InvalidAmount) => {
+            format!(
+                "Error: Invalid amount {} cents for withdrawal.",
+                amount_in_cents
+            )
+        }
+        Err(FinanceAccountError::InsufficientFunds) => {
+            format!(
+                "Error: Insufficient funds in account {} for withdrawal of {} cents.",
+                account.name(),
+                amount_in_cents
+            )
+        }
+        Err(FinanceAccountError::AccountArchived) => {
+            format!(
+                "Error: Cannot withdraw from archived account {}.",
+                account.name()
+            )
+        }
     }
 }
 
