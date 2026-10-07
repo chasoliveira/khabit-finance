@@ -11,6 +11,7 @@ pub enum FinanceAccountError {
     InvalidAmount,
     InsufficientFunds,
     AccountArchived,
+    AccountNotFound,
 }
 
 impl FinanceAccountType {
@@ -24,7 +25,8 @@ impl FinanceAccountType {
     }
 }
 
-pub struct FinanceAccount {
+#[warn(private_interfaces)]
+pub(crate) struct FinanceAccount {
     id: String,
     name: String,
     account_type: FinanceAccountType,

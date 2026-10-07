@@ -1,13 +1,13 @@
 pub mod finance;
 
 pub use finance::application::withdraw_use_case::withdraw_from_account;
-pub use finance::domain::account::FinanceAccount;
 pub use finance::domain::account::FinanceAccountError;
 pub use finance::domain::account::FinanceAccountType;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::finance::domain::account::FinanceAccount;
 
     #[test]
     fn test_withdraw_from_account() {
