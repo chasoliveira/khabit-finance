@@ -13,32 +13,28 @@ pub enum FinanceAccountError {
     AccountArchived,
 }
 
-pub fn withdraw_from_account(account: &mut FinanceAccount, amount_in_cents: i64) -> String {
+pub enum FinanceAccountOutcome {
+    Success(i64),
+    InvalidAmount(String),
+    InsufficientFunds(String),
+    AccountArchived(String),
+}
+
+pub fn withdraw_from_account(
+    account: &mut FinanceAccount,
+    amount_in_cents: i64,
+) -> FinanceAccountOutcome {
     match account.withdraw(amount_in_cents) {
-        Ok(()) => format!(
-            "Successfully withdrew {} cents from account {}.",
-            amount_in_cents,
-            account.name()
-        ),
+        Ok(()) => FinanceAccountOutcome::Success(account.balance_in_cents()),
         Err(FinanceAccountError::InvalidAmount) => {
-            format!(
-                "Error: Invalid amount {} cents for withdrawal.",
-                amount_in_cents
-            )
+            FinanceAccountOutcome::InvalidAmount("Invalid amount for withdrawal.".to_string())
         }
-        Err(FinanceAccountError::InsufficientFunds) => {
-            format!(
-                "Error: Insufficient funds in account {} for withdrawal of {} cents.",
-                account.name(),
-                amount_in_cents
-            )
-        }
-        Err(FinanceAccountError::AccountArchived) => {
-            format!(
-                "Error: Cannot withdraw from archived account {}.",
-                account.name()
-            )
-        }
+        Err(FinanceAccountError::InsufficientFunds) => FinanceAccountOutcome::InsufficientFunds(
+            "Insufficient funds for withdrawal.".to_string(),
+        ),
+        Err(FinanceAccountError::AccountArchived) => FinanceAccountOutcome::AccountArchived(
+            "Cannot withdraw from archived account.".to_string(),
+        ),
     }
 }
 
@@ -349,9 +345,7 @@ mod tests {
         account.deposit(1000).unwrap();
 
         let result = withdraw_from_account(&mut account, 500);
-        assert!(
-            result.contains("Successfully withdrew 500 cents from account My Checking Account.")
-        );
+        assert!(matches!(result, FinanceAccountOutcome::Success(balance) if balance == 500));
         assert_eq!(account.balance_in_cents(), 500);
     }
 
@@ -365,8 +359,9 @@ mod tests {
         account.deposit(1000).unwrap();
 
         let result = withdraw_from_account(&mut account, 1500);
-        assert!(result.contains(
-            "Error: Insufficient funds in account My Checking Account for withdrawal of 1500 cents."
+        assert!(matches!(
+            result,
+            FinanceAccountOutcome::InsufficientFunds(_)
         ));
         assert_eq!(account.balance_in_cents(), 1000);
     }
@@ -381,7 +376,7 @@ mod tests {
         account.deposit(1000).unwrap();
 
         let result = withdraw_from_account(&mut account, -500);
-        assert!(result.contains("Error: Invalid amount -500 cents for withdrawal."));
+        assert!(matches!(result, FinanceAccountOutcome::InvalidAmount(_)));
         assert_eq!(account.balance_in_cents(), 1000);
     }
 
@@ -396,9 +391,7 @@ mod tests {
         account.archive();
 
         let result = withdraw_from_account(&mut account, 500);
-        assert!(
-            result.contains("Error: Cannot withdraw from archived account My Checking Account.")
-        );
+        assert!(matches!(result, FinanceAccountOutcome::AccountArchived(_)));
         assert_eq!(account.balance_in_cents(), 1000);
     }
 }
