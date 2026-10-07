@@ -160,6 +160,23 @@ mod tests {
     }
 
     #[test]
+    fn test_account_archived_deposit_invalid() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.archive();
+
+        let result = account.deposit(-1000);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
+
+        assert_eq!(account.balance_in_cents(), 0);
+        assert!(account.is_archived());
+    }
+
+    #[test]
     fn test_account_deposit_negative() {
         let mut account = FinanceAccount::new(
             "1".to_string(),
@@ -214,6 +231,22 @@ mod tests {
         account.archive();
 
         let result = account.withdraw(500);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
+        assert_eq!(account.balance_in_cents(), 0);
+        assert!(account.is_archived());
+    }
+
+    #[test]
+    fn test_account_withdraw_archived_negative() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.archive();
+
+        let result = account.withdraw(-500);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
         assert_eq!(account.balance_in_cents(), 0);
