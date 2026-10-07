@@ -59,30 +59,39 @@ impl FinanceAccount {
         self.balance_in_cents
     }
 
-    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
-        if self.is_archived {
-            return Err(FinanceAccountError::AccountArchived);
-        }
+    fn validate_amount(&self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
         if amount_in_cents <= 0 {
             Err(FinanceAccountError::InvalidAmount)
         } else {
-            self.balance_in_cents += amount_in_cents;
             Ok(())
         }
     }
 
-    pub fn withdraw(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+    fn validate_archived(&self) -> Result<(), FinanceAccountError> {
         if self.is_archived {
-            return Err(FinanceAccountError::AccountArchived);
-        }
-        if amount_in_cents <= 0 {
-            Err(FinanceAccountError::InvalidAmount)
-        } else if self.balance_in_cents < amount_in_cents {
-            Err(FinanceAccountError::InsufficientFunds)
+            Err(FinanceAccountError::AccountArchived)
         } else {
-            self.balance_in_cents -= amount_in_cents;
             Ok(())
         }
+    }
+
+    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+        self.validate_archived()?;
+        self.validate_amount(amount_in_cents)?;
+
+        self.balance_in_cents += amount_in_cents;
+        Ok(())
+    }
+
+    pub fn withdraw(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+        self.validate_archived()?;
+        self.validate_amount(amount_in_cents)?;
+
+        if self.balance_in_cents < amount_in_cents {
+            return Err(FinanceAccountError::InsufficientFunds);
+        }
+        self.balance_in_cents -= amount_in_cents;
+        Ok(())
     }
 
     pub fn archive(&mut self) {
@@ -214,7 +223,8 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        let result_deposit = account.deposit(1000);
+        assert!(result_deposit.is_ok());
 
         let result = account.withdraw(500);
         assert!(result.is_ok());
@@ -275,7 +285,8 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        let result_deposit = account.deposit(1000);
+        assert!(result_deposit.is_ok());
 
         let result = account.withdraw(-500);
         assert!(result.is_err());
@@ -290,7 +301,8 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        let result_deposit = account.deposit(1000);
+        assert!(result_deposit.is_ok());
 
         let result = account.withdraw(0);
         assert!(result.is_err());
