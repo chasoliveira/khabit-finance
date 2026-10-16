@@ -25,8 +25,7 @@ impl FinanceAccountType {
     }
 }
 
-#[warn(private_interfaces)]
-pub(crate) struct FinanceAccount {
+pub struct FinanceAccount {
     id: String,
     name: String,
     account_type: FinanceAccountType,

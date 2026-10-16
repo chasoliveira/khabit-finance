@@ -1,7 +1,8 @@
-use crate::finance::domain::account::{FinanceAccount, FinanceAccountError, FinanceAccountType};
+use crate::finance::domain::account::{
+    self, FinanceAccount, FinanceAccountError, FinanceAccountType,
+};
 
-#[warn(private_interfaces)]
-pub(crate) struct InMemoryAccountRepository {
+pub struct InMemoryAccountRepository {
     // This is a placeholder for the in-memory storage of accounts.
     // In a real implementation, you might use a HashMap or another data structure.
     // For simplicity, we'll just use a vector here.
@@ -15,37 +16,12 @@ impl InMemoryAccountRepository {
         }
     }
 
-    pub fn add_account(&mut self, id: String, name: String, account_type: FinanceAccountType) {
-        let account = FinanceAccount::new(id, name, account_type);
+    pub fn add(&mut self, account: FinanceAccount) {
         self.accounts.push(account);
     }
 
-    pub fn get_account_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
+    pub fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
         self.accounts.iter_mut().find(|account| account.id() == id)
-    }
-
-    pub fn deposit_to_account(
-        &mut self,
-        id: &str,
-        amount_in_cents: i64,
-    ) -> Result<(), FinanceAccountError> {
-        if let Some(account) = self.get_account_by_id_mut(id) {
-            account.deposit(amount_in_cents)
-        } else {
-            Err(FinanceAccountError::AccountNotFound)
-        }
-    }
-
-    pub fn withdraw_from_account(
-        &mut self,
-        id: &str,
-        amount_in_cents: i64,
-    ) -> Result<(), FinanceAccountError> {
-        if let Some(account) = self.get_account_by_id_mut(id) {
-            account.withdraw(amount_in_cents)
-        } else {
-            Err(FinanceAccountError::AccountNotFound)
-        }
     }
 }
 
@@ -56,40 +32,31 @@ mod tests {
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
-        repository.add_account(
+        repository.add(FinanceAccount::new(
             "1".to_string(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
-        );
+        ));
         assert_eq!(repository.accounts.len(), 1);
     }
 
     #[test]
-    fn test_deposit_to_account() {
+    fn test_find_by_id_mut() {
         let mut repository = InMemoryAccountRepository::new();
-        repository.add_account(
+        repository.add(FinanceAccount::new(
             "1".to_string(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
-        );
-        let result = repository.deposit_to_account("1", 1000);
-        assert!(result.is_ok());
-        let account = repository.get_account_by_id_mut("1").unwrap();
-        assert_eq!(account.balance_in_cents(), 1000);
+        ));
+        let account = repository.find_by_id_mut("1");
+        assert!(account.is_some());
+        assert_eq!(account.unwrap().id(), "1");
     }
 
     #[test]
-    fn test_withdraw_from_account() {
+    fn test_find_by_id_mut_not_found() {
         let mut repository = InMemoryAccountRepository::new();
-        repository.add_account(
-            "1".to_string(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        );
-        let _ = repository.deposit_to_account("1", 1000);
-        let result = repository.withdraw_from_account("1", 500);
-        assert!(result.is_ok());
-        let account = repository.get_account_by_id_mut("1").unwrap();
-        assert_eq!(account.balance_in_cents(), 500);
+        let account = repository.find_by_id_mut("nonexistent");
+        assert!(account.is_none());
     }
 }
