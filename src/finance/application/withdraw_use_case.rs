@@ -4,7 +4,7 @@ use crate::{
 };
 
 #[derive(PartialEq, Debug)]
-pub enum WithdrawTypeError {
+pub enum WithdrawError {
     AccountNotFound,
     InvalidAmount,
     AccountArchived,
@@ -15,17 +15,17 @@ pub fn withdraw_from_account(
     repository: &mut InMemoryAccountRepository,
     account_id: &str,
     amount_in_cents: i64,
-) -> Result<i64, WithdrawTypeError> {
+) -> Result<i64, WithdrawError> {
     let Some(account) = repository.find_by_id_mut(account_id) else {
-        return Err(WithdrawTypeError::AccountNotFound);
+        return Err(WithdrawError::AccountNotFound);
     };
 
     match account.withdraw(amount_in_cents) {
         Ok(()) => Ok(account.balance_in_cents()),
         Err(e) => match e {
-            FinanceAccountError::AccountArchived => Err(WithdrawTypeError::AccountArchived),
-            FinanceAccountError::InsufficientFunds => Err(WithdrawTypeError::InsufficientFunds),
-            FinanceAccountError::InvalidAmount => Err(WithdrawTypeError::InvalidAmount),
+            FinanceAccountError::AccountArchived => Err(WithdrawError::AccountArchived),
+            FinanceAccountError::InsufficientFunds => Err(WithdrawError::InsufficientFunds),
+            FinanceAccountError::InvalidAmount => Err(WithdrawError::InvalidAmount),
         },
     }
 }
@@ -67,7 +67,7 @@ mod tests {
         repository.add(account);
 
         let result = withdraw_from_account(&mut repository, "1", 1500);
-        assert_eq!(result, Err(WithdrawTypeError::InsufficientFunds));
+        assert_eq!(result, Err(WithdrawError::InsufficientFunds));
         assert_eq!(
             repository.find_by_id_mut("1").unwrap().balance_in_cents(),
             1000
@@ -86,7 +86,7 @@ mod tests {
         repository.add(account);
 
         let result = withdraw_from_account(&mut repository, "1", -500);
-        assert_eq!(result, Err(WithdrawTypeError::InvalidAmount));
+        assert_eq!(result, Err(WithdrawError::InvalidAmount));
         assert_eq!(
             repository.find_by_id_mut("1").unwrap().balance_in_cents(),
             1000
@@ -106,7 +106,7 @@ mod tests {
         repository.add(account);
 
         let result = withdraw_from_account(&mut repository, "1", 500);
-        assert_eq!(result, Err(WithdrawTypeError::AccountArchived));
+        assert_eq!(result, Err(WithdrawError::AccountArchived));
         assert_eq!(
             repository.find_by_id_mut("1").unwrap().balance_in_cents(),
             1000

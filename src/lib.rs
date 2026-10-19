@@ -15,7 +15,7 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account() {
-        let mut repository = &mut InMemoryAccountRepository::new();
+        let repository = &mut InMemoryAccountRepository::new();
         {
             let mut account = FinanceAccount::new(
                 "1".to_string(),
@@ -26,7 +26,7 @@ mod tests {
             repository.add(account);
         }
 
-        let result = withdraw_from_account(&mut repository, "1", 500);
+        let result = withdraw_from_account(repository, "1", 500);
         assert_eq!(result.unwrap(), 500);
 
         {
