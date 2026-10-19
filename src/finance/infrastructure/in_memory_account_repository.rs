@@ -1,6 +1,4 @@
-use crate::finance::domain::account::{
-    self, FinanceAccount, FinanceAccountError, FinanceAccountType,
-};
+use crate::finance::domain::account::FinanceAccount;
 
 pub struct InMemoryAccountRepository {
     // This is a placeholder for the in-memory storage of accounts.
@@ -28,7 +26,7 @@ impl InMemoryAccountRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use crate::{FinanceAccount, FinanceAccountType};
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
@@ -51,6 +49,18 @@ mod tests {
         let account = repository.find_by_id_mut("1");
         assert!(account.is_some());
         assert_eq!(account.unwrap().id(), "1");
+    }
+
+    #[test]
+    fn test_find_by_id_mut_withdraw() {
+        let mut repository = InMemoryAccountRepository::new();
+        repository.add(FinanceAccount::new(
+            "1".to_string(),
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+        ));
+        let account = repository.find_by_id_mut("1");
+        assert!(account.is_some());
     }
 
     #[test]

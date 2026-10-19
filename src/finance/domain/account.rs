@@ -11,7 +11,6 @@ pub enum FinanceAccountError {
     InvalidAmount,
     InsufficientFunds,
     AccountArchived,
-    AccountNotFound,
 }
 
 impl FinanceAccountType {
