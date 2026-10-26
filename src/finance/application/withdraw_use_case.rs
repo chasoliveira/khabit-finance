@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account() {
-        let mut repository = InMemoryAccountRepository::;
+        let mut repository = InMemoryAccountRepository::new();
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
