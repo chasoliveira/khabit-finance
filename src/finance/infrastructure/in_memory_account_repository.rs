@@ -8,17 +8,19 @@ pub struct InMemoryAccountRepository {
     accounts: Vec<FinanceAccount>,
 }
 
-impl AccountRepository for InMemoryAccountRepository {
-    fn new() -> Self {
+impl InMemoryAccountRepository {
+    pub fn new() -> Self {
         InMemoryAccountRepository {
             accounts: Vec::new(),
         }
     }
 
-    fn add(&mut self, account: FinanceAccount) {
+    pub fn add(&mut self, account: FinanceAccount) {
         self.accounts.push(account);
     }
+}
 
+impl AccountRepository for InMemoryAccountRepository {
     fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
         self.accounts.iter_mut().find(|account| account.id() == id)
     }

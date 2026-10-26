@@ -1,9 +1,5 @@
 use crate::{
-    FinanceAccountError,
-    finance::{
-        application::account_repository_trait::AccountRepository,
-        infrastructure::in_memory_account_repository::InMemoryAccountRepository,
-    },
+    FinanceAccountError, finance::application::account_repository_trait::AccountRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -14,11 +10,14 @@ pub enum WithdrawError {
     InsufficientFunds,
 }
 
-pub fn withdraw_from_account(
-    repository: &mut InMemoryAccountRepository,
+pub fn withdraw_from_account<R>(
+    repository: &mut R,
     account_id: &str,
     amount_in_cents: i64,
-) -> Result<i64, WithdrawError> {
+) -> Result<i64, WithdrawError>
+where
+    R: AccountRepository,
+{
     let Some(account) = repository.find_by_id_mut(account_id) else {
         return Err(WithdrawError::AccountNotFound);
     };
@@ -35,13 +34,13 @@ pub fn withdraw_from_account(
 
 #[cfg(test)]
 mod tests {
-    use crate::finance::domain::account::{FinanceAccount, FinanceAccountType};
-
     use super::*;
+    use crate::finance::domain::account::{FinanceAccount, FinanceAccountType};
+    use crate::finance::infrastructure::in_memory_account_repository::InMemoryAccountRepository;
 
     #[test]
     fn test_withdraw_from_account() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut repository = InMemoryAccountRepository::;
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
