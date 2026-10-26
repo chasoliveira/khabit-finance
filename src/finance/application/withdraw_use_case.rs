@@ -51,7 +51,7 @@ mod tests {
             match self.account.as_mut() {
                 Some(acc) => {
                     if acc.id() == id {
-                        self.account.as_mut()
+                        Some(acc)
                     } else {
                         None
                     }
@@ -134,5 +134,19 @@ mod tests {
             repository.find_by_id_mut("1").unwrap().balance_in_cents(),
             1000
         );
+    }
+
+    #[test]
+    fn test_withdraw_from_account_account_not_found() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let mut repository = FakeAccountRepository::new(Some(account));
+        let result = withdraw_from_account(&mut repository, "999", 500);
+        assert_eq!(result, Err(WithdrawError::AccountNotFound));
     }
 }
