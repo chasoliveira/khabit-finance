@@ -9,7 +9,7 @@ pub use finance::domain::account::FinanceAccountType;
 mod tests {
     use super::*;
     use crate::finance::{
-        domain::account::FinanceAccount,
+        application::account_repository_trait::AccountRepository, domain::account::FinanceAccount,
         infrastructure::in_memory_account_repository::InMemoryAccountRepository,
     };
 

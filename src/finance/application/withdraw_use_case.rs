@@ -1,6 +1,9 @@
 use crate::{
     FinanceAccountError,
-    finance::infrastructure::in_memory_account_repository::InMemoryAccountRepository,
+    finance::{
+        application::account_repository_trait::AccountRepository,
+        infrastructure::in_memory_account_repository::InMemoryAccountRepository,
+    },
 };
 
 #[derive(PartialEq, Debug)]

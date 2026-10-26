@@ -1,3 +1,4 @@
+use crate::finance::application::account_repository_trait::AccountRepository;
 use crate::finance::domain::account::FinanceAccount;
 
 pub struct InMemoryAccountRepository {
@@ -7,18 +8,18 @@ pub struct InMemoryAccountRepository {
     accounts: Vec<FinanceAccount>,
 }
 
-impl InMemoryAccountRepository {
-    pub fn new() -> Self {
+impl AccountRepository for InMemoryAccountRepository {
+    fn new() -> Self {
         InMemoryAccountRepository {
             accounts: Vec::new(),
         }
     }
 
-    pub fn add(&mut self, account: FinanceAccount) {
+    fn add(&mut self, account: FinanceAccount) {
         self.accounts.push(account);
     }
 
-    pub fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
+    fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
         self.accounts.iter_mut().find(|account| account.id() == id)
     }
 }
@@ -26,6 +27,7 @@ impl InMemoryAccountRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::finance::application::account_repository_trait::AccountRepository;
     use crate::{FinanceAccount, FinanceAccountType};
     #[test]
     fn test_add_account() {
