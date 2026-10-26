@@ -48,7 +48,16 @@ mod tests {
     }
     impl AccountRepository for FakeAccountRepository {
         fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
-            self.account.as_mut()
+            match self.account.as_mut() {
+                Some(acc) => {
+                    if acc.id() == id {
+                        self.account.as_mut()
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            }
         }
     }
 
