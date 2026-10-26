@@ -35,19 +35,33 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::finance::application::account_repository_trait::AccountRepository;
     use crate::finance::domain::account::{FinanceAccount, FinanceAccountType};
-    use crate::finance::infrastructure::in_memory_account_repository::InMemoryAccountRepository;
+
+    struct FakeAccountRepository {
+        account: Option<FinanceAccount>,
+    }
+    impl FakeAccountRepository {
+        fn new(account: Option<FinanceAccount>) -> Self {
+            FakeAccountRepository { account }
+        }
+    }
+    impl AccountRepository for FakeAccountRepository {
+        fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
+            self.account.as_mut()
+        }
+    }
 
     #[test]
     fn test_withdraw_from_account() {
-        let mut repository = InMemoryAccountRepository::new();
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
-        repository.add(account);
+
+        let mut repository = FakeAccountRepository::new(Some(account));
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Ok(500));
@@ -59,14 +73,14 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_insufficient_funds() {
-        let mut repository = InMemoryAccountRepository::new();
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
-        repository.add(account);
+
+        let mut repository = FakeAccountRepository::new(Some(account));
 
         let result = withdraw_from_account(&mut repository, "1", 1500);
         assert_eq!(result, Err(WithdrawError::InsufficientFunds));
@@ -78,14 +92,13 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_invalid_amount() {
-        let mut repository = InMemoryAccountRepository::new();
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
-        repository.add(account);
+        let mut repository = FakeAccountRepository::new(Some(account));
 
         let result = withdraw_from_account(&mut repository, "1", -500);
         assert_eq!(result, Err(WithdrawError::InvalidAmount));
@@ -97,7 +110,6 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_account_archived() {
-        let mut repository = InMemoryAccountRepository::new();
         let mut account = FinanceAccount::new(
             "1".to_string(),
             "My Checking Account".to_string(),
@@ -105,7 +117,7 @@ mod tests {
         );
         account.deposit(1000).unwrap();
         account.archive();
-        repository.add(account);
+        let mut repository = FakeAccountRepository::new(Some(account));
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Err(WithdrawError::AccountArchived));
