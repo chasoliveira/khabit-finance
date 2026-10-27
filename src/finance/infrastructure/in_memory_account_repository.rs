@@ -21,8 +21,11 @@ impl InMemoryAccountRepository {
 }
 
 impl AccountRepository for InMemoryAccountRepository {
-    fn find_by_id_mut(&mut self, id: &str) -> Option<&mut FinanceAccount> {
-        self.accounts.iter_mut().find(|account| account.id() == id)
+    fn find_by_id_mut(&mut self, id: &str) -> Option<FinanceAccount> {
+        self.accounts
+            .iter_mut()
+            .find(|account| account.id() == id)
+            .cloned()
     }
 }
 
