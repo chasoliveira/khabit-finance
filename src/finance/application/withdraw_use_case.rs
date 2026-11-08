@@ -9,6 +9,7 @@ pub enum WithdrawError {
     InvalidAmount,
     AccountArchived,
     InsufficientFunds,
+    RepositoryFailure,
 }
 
 impl From<FinanceAccountError> for WithdrawError {
@@ -24,6 +25,7 @@ impl From<AccountRepositoryError> for WithdrawError {
     fn from(error: AccountRepositoryError) -> Self {
         match error {
             AccountRepositoryError::AccountNotFound => Self::AccountNotFound,
+            AccountRepositoryError::ReadFailed => Self::RepositoryFailure,
         }
     }
 }
@@ -65,7 +67,7 @@ mod tests {
     impl AccountRepository for FakeAccountRepository {
         fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
             if id == "SIMULATE_ERROR" {
-                return Err(AccountRepositoryError::AccountNotFound);
+                return Err(AccountRepositoryError::ReadFailed);
             }
             match &self.account {
                 Some(acc) => {
@@ -204,6 +206,6 @@ mod tests {
 
         let mut repository = FakeAccountRepository::new(Some(account));
         let result = withdraw_from_account(&mut repository, "SIMULATE_ERROR", 500);
-        assert_eq!(result, Err(WithdrawError::AccountNotFound));
+        assert_eq!(result, Err(WithdrawError::RepositoryFailure));
     }
 }
