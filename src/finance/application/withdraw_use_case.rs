@@ -1,5 +1,6 @@
 use crate::{
-    FinanceAccountError, finance::application::account_repository_trait::AccountRepository,
+    FinanceAccountError,
+    finance::application::account_repository_trait::{AccountRepository, AccountRepositoryError},
 };
 
 #[derive(PartialEq, Debug)]
@@ -8,6 +9,23 @@ pub enum WithdrawError {
     InvalidAmount,
     AccountArchived,
     InsufficientFunds,
+}
+
+impl From<FinanceAccountError> for WithdrawError {
+    fn from(error: FinanceAccountError) -> Self {
+        match error {
+            FinanceAccountError::AccountArchived => Self::AccountArchived,
+            FinanceAccountError::InsufficientFunds => Self::InsufficientFunds,
+            FinanceAccountError::InvalidAmount => Self::InvalidAmount,
+        }
+    }
+}
+impl From<AccountRepositoryError> for WithdrawError {
+    fn from(error: AccountRepositoryError) -> Self {
+        match error {
+            AccountRepositoryError::AccountNotFound => Self::AccountNotFound,
+        }
+    }
 }
 
 pub fn withdraw_from_account<R>(
@@ -21,22 +39,12 @@ where
     let Some(mut account) = repository.find_by_id(account_id) else {
         return Err(WithdrawError::AccountNotFound);
     };
-    let withdraw_result = account.withdraw(amount_in_cents);
-    match withdraw_result {
-        Ok(()) => {
-            let balance = account.balance_in_cents();
-            let save_result = repository.save(account);
-            match save_result {
-                Ok(()) => Ok(balance),
-                Err(_) => Err(WithdrawError::AccountNotFound),
-            }
-        }
-        Err(e) => match e {
-            FinanceAccountError::AccountArchived => Err(WithdrawError::AccountArchived),
-            FinanceAccountError::InsufficientFunds => Err(WithdrawError::InsufficientFunds),
-            FinanceAccountError::InvalidAmount => Err(WithdrawError::InvalidAmount),
-        },
-    }
+
+    account.withdraw(amount_in_cents)?;
+    let balance = account.balance_in_cents();
+    repository.save(account)?;
+
+    Ok(balance)
 }
 
 #[cfg(test)]
