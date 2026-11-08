@@ -39,7 +39,7 @@ impl AccountRepository for InMemoryAccountRepository {
             self.accounts[pos] = account;
             Ok(())
         } else {
-            return Err(AccountRepositoryError::AccountNotFound);
+            return Err(AccountRepositoryError::WriteFailed);
         }
     }
 }
@@ -49,6 +49,7 @@ mod tests {
     use super::*;
     use crate::finance::application::account_repository_trait::AccountRepository;
     use crate::{FinanceAccount, FinanceAccountType};
+
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
@@ -74,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_id_withdraw() {
+    fn test_find_by_id_returns_some() {
         let mut repository = InMemoryAccountRepository::new();
         repository.add(FinanceAccount::new(
             "1".to_string(),
@@ -86,9 +87,37 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_id_not_found() {
+    fn test_find_by_id_returns_none() {
         let repository = InMemoryAccountRepository::new();
         let account = repository.find_by_id("nonexistent").unwrap();
         assert!(account.is_none());
+    }
+
+    #[test]
+    fn test_save_ok() {
+        let mut repository = InMemoryAccountRepository::new();
+        let account = FinanceAccount::new(
+            "1".to_string(),
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        repository.add(account.clone());
+        let result = repository.save(account);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_save_error() {
+        let mut repository = InMemoryAccountRepository::new();
+        let account = FinanceAccount::new(
+            "1".to_string(),
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        let result = repository.save(account);
+
+        assert!(result.is_err());
+        assert_eq!(result, Err(AccountRepositoryError::WriteFailed))
     }
 }

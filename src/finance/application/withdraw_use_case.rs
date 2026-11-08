@@ -24,8 +24,8 @@ impl From<FinanceAccountError> for WithdrawError {
 impl From<AccountRepositoryError> for WithdrawError {
     fn from(error: AccountRepositoryError) -> Self {
         match error {
-            AccountRepositoryError::AccountNotFound => Self::AccountNotFound,
             AccountRepositoryError::ReadFailed => Self::RepositoryFailure,
+            AccountRepositoryError::WriteFailed => Self::RepositoryFailure,
         }
     }
 }
@@ -88,10 +88,10 @@ mod tests {
                         self.account = Some(account);
                         Ok(())
                     } else {
-                        Err(AccountRepositoryError::AccountNotFound)
+                        Err(AccountRepositoryError::WriteFailed)
                     }
                 }
-                None => Err(AccountRepositoryError::AccountNotFound),
+                None => Err(AccountRepositoryError::WriteFailed),
             }
         }
     }

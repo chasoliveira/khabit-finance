@@ -2,8 +2,8 @@ use crate::finance::domain::account::FinanceAccount;
 
 #[derive(Debug, PartialEq)]
 pub enum AccountRepositoryError {
-    AccountNotFound,
     ReadFailed,
+    WriteFailed,
 }
 
 pub trait AccountRepository {
