@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_id_mut() {
+    fn test_find_by_id() {
         let mut repository = InMemoryAccountRepository::new();
         repository.add(FinanceAccount::new(
             "1".to_string(),
@@ -73,7 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_id_mut_withdraw() {
+    fn test_find_by_id_withdraw() {
         let mut repository = InMemoryAccountRepository::new();
         repository.add(FinanceAccount::new(
             "1".to_string(),
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_id_mut_not_found() {
+    fn test_find_by_id_not_found() {
         let repository = InMemoryAccountRepository::new();
         let account = repository.find_by_id("nonexistent");
         assert!(account.is_none());

@@ -24,7 +24,7 @@ impl FinanceAccountType {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct FinanceAccount {
     id: String,
     name: String,
