@@ -1,4 +1,6 @@
-use crate::finance::application::account_repository_trait::AccountRepository;
+use crate::finance::application::account_repository_trait::{
+    AccountRepository, AccountRepositoryError,
+};
 use crate::finance::domain::account::FinanceAccount;
 
 pub struct InMemoryAccountRepository {
@@ -26,6 +28,18 @@ impl AccountRepository for InMemoryAccountRepository {
             .iter_mut()
             .find(|account| account.id() == id)
             .cloned()
+    }
+    fn save(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
+        if let Some(pos) = self
+            .accounts
+            .iter()
+            .position(|acc| acc.id() == account.id())
+        {
+            self.accounts[pos] = account;
+            Ok(())
+        } else {
+            return Err(AccountRepositoryError::AccountNotFound);
+        }
     }
 }
 

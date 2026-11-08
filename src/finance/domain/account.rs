@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum FinanceAccountType {
     Cash,
     Checking,
@@ -24,6 +24,7 @@ impl FinanceAccountType {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct FinanceAccount {
     id: String,
     name: String,
