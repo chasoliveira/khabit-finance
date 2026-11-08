@@ -24,9 +24,10 @@ where
     let withdraw_result = account.withdraw(amount_in_cents);
     match withdraw_result {
         Ok(()) => {
-            let save_result = repository.save(account.clone());
+            let balance = account.balance_in_cents();
+            let save_result = repository.save(account);
             match save_result {
-                Ok(()) => Ok(account.balance_in_cents()),
+                Ok(()) => Ok(balance),
                 Err(_) => Err(WithdrawError::AccountNotFound),
             }
         }
