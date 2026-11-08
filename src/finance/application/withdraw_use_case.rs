@@ -18,7 +18,7 @@ pub fn withdraw_from_account<R>(
 where
     R: AccountRepository,
 {
-    let Some(mut account) = repository.find_by_id_mut(account_id) else {
+    let Some(mut account) = repository.find_by_id(account_id) else {
         return Err(WithdrawError::AccountNotFound);
     };
     let withdraw_result = account.withdraw(amount_in_cents);
@@ -56,7 +56,7 @@ mod tests {
         }
     }
     impl AccountRepository for FakeAccountRepository {
-        fn find_by_id_mut(&mut self, id: &str) -> Option<FinanceAccount> {
+        fn find_by_id(&self, id: &str) -> Option<FinanceAccount> {
             match self.account.clone() {
                 Some(acc) => {
                     if acc.id() == id {
@@ -90,7 +90,7 @@ mod tests {
         assert_eq!(result, Ok(500));
         assert_eq!(
             repository
-                .find_by_id_mut(&"1".to_string())
+                .find_by_id(&"1".to_string())
                 .unwrap()
                 .balance_in_cents(),
             500
@@ -110,10 +110,7 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 1500);
         assert_eq!(result, Err(WithdrawError::InsufficientFunds));
-        assert_eq!(
-            repository.find_by_id_mut("1").unwrap().balance_in_cents(),
-            1000
-        );
+        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
     }
 
     #[test]
@@ -128,10 +125,7 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", -500);
         assert_eq!(result, Err(WithdrawError::InvalidAmount));
-        assert_eq!(
-            repository.find_by_id_mut("1").unwrap().balance_in_cents(),
-            1000
-        );
+        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
     }
 
     #[test]
@@ -147,10 +141,7 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Err(WithdrawError::AccountArchived));
-        assert_eq!(
-            repository.find_by_id_mut("1").unwrap().balance_in_cents(),
-            1000
-        );
+        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
     }
 
     #[test]

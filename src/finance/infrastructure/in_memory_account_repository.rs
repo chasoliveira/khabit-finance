@@ -23,9 +23,9 @@ impl InMemoryAccountRepository {
 }
 
 impl AccountRepository for InMemoryAccountRepository {
-    fn find_by_id_mut(&mut self, id: &str) -> Option<FinanceAccount> {
+    fn find_by_id(&self, id: &str) -> Option<FinanceAccount> {
         self.accounts
-            .iter_mut()
+            .iter()
             .find(|account| account.id() == id)
             .cloned()
     }
@@ -67,7 +67,7 @@ mod tests {
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         ));
-        let account = repository.find_by_id_mut("1");
+        let account = repository.find_by_id("1");
         assert!(account.is_some());
         assert_eq!(account.unwrap().id(), "1");
     }
@@ -80,14 +80,14 @@ mod tests {
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         ));
-        let account = repository.find_by_id_mut("1");
+        let account = repository.find_by_id("1");
         assert!(account.is_some());
     }
 
     #[test]
     fn test_find_by_id_mut_not_found() {
-        let mut repository = InMemoryAccountRepository::new();
-        let account = repository.find_by_id_mut("nonexistent");
+        let repository = InMemoryAccountRepository::new();
+        let account = repository.find_by_id("nonexistent");
         assert!(account.is_none());
     }
 }
