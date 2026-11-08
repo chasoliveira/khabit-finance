@@ -22,18 +22,19 @@ where
         return Err(WithdrawError::AccountNotFound);
     };
     let withdraw_result = account.withdraw(amount_in_cents);
-    let save_result = repository.save(account.clone());
-    if save_result.is_ok() {
-        match withdraw_result {
-            Ok(()) => Ok(account.balance_in_cents()),
-            Err(e) => match e {
-                FinanceAccountError::AccountArchived => Err(WithdrawError::AccountArchived),
-                FinanceAccountError::InsufficientFunds => Err(WithdrawError::InsufficientFunds),
-                FinanceAccountError::InvalidAmount => Err(WithdrawError::InvalidAmount),
-            },
+    match withdraw_result {
+        Ok(()) => {
+            let save_result = repository.save(account.clone());
+            match save_result {
+                Ok(()) => Ok(account.balance_in_cents()),
+                Err(_) => Err(WithdrawError::AccountNotFound),
+            }
         }
-    } else {
-        Err(WithdrawError::AccountNotFound)
+        Err(e) => match e {
+            FinanceAccountError::AccountArchived => Err(WithdrawError::AccountArchived),
+            FinanceAccountError::InsufficientFunds => Err(WithdrawError::InsufficientFunds),
+            FinanceAccountError::InvalidAmount => Err(WithdrawError::InvalidAmount),
+        },
     }
 }
 
