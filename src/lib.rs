@@ -30,8 +30,7 @@ mod tests {
         assert_eq!(result.unwrap(), 500);
 
         {
-            let existing_account = repository.find_by_id("1").unwrap();
-
+            let existing_account = repository.find_by_id("1").unwrap().unwrap();
             assert_eq!(existing_account.balance_in_cents(), 500);
         }
     }

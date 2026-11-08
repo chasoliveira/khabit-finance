@@ -36,10 +36,9 @@ pub fn withdraw_from_account<R>(
 where
     R: AccountRepository,
 {
-    let Some(mut account) = repository.find_by_id(account_id) else {
+    let Some(mut account) = repository.find_by_id(account_id)? else {
         return Err(WithdrawError::AccountNotFound);
     };
-
     account.withdraw(amount_in_cents)?;
     let balance = account.balance_in_cents();
     repository.save(account)?;
@@ -64,16 +63,16 @@ mod tests {
         }
     }
     impl AccountRepository for FakeAccountRepository {
-        fn find_by_id(&self, id: &str) -> Option<FinanceAccount> {
+        fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
             match &self.account {
                 Some(acc) => {
                     if acc.id() == id {
-                        self.account.clone()
+                        Ok(self.account.clone())
                     } else {
-                        None
+                        Ok(None)
                     }
                 }
-                None => None,
+                None => Ok(None),
             }
         }
 
@@ -105,7 +104,14 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Ok(500));
-        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 500);
+        assert_eq!(
+            repository
+                .find_by_id("1")
+                .unwrap()
+                .unwrap()
+                .balance_in_cents(),
+            500
+        );
     }
 
     #[test]
@@ -121,7 +127,8 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 1500);
         assert_eq!(result, Err(WithdrawError::InsufficientFunds));
-        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
+        let account = repository.find_by_id("1").unwrap().unwrap();
+        assert_eq!(account.balance_in_cents(), 1000);
     }
 
     #[test]
@@ -136,7 +143,14 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", -500);
         assert_eq!(result, Err(WithdrawError::InvalidAmount));
-        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
+        assert_eq!(
+            repository
+                .find_by_id("1")
+                .unwrap()
+                .unwrap()
+                .balance_in_cents(),
+            1000
+        );
     }
 
     #[test]
@@ -152,7 +166,14 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Err(WithdrawError::AccountArchived));
-        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 1000);
+        assert_eq!(
+            repository
+                .find_by_id("1")
+                .unwrap()
+                .unwrap()
+                .balance_in_cents(),
+            1000
+        );
     }
 
     #[test]
