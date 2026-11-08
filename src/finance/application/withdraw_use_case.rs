@@ -25,7 +25,7 @@ impl From<AccountRepositoryError> for WithdrawError {
     fn from(error: AccountRepositoryError) -> Self {
         match error {
             AccountRepositoryError::ReadFailed => Self::RepositoryFailure,
-            AccountRepositoryError::WriteFailed => Self::RepositoryFailure,
+            AccountRepositoryError::UpdateFailed => Self::RepositoryFailure,
         }
     }
 }
@@ -43,7 +43,7 @@ where
     };
     account.withdraw(amount_in_cents)?;
     let balance = account.balance_in_cents();
-    repository.save(account)?;
+    repository.update(account)?;
 
     Ok(balance)
 }
@@ -81,17 +81,17 @@ mod tests {
             }
         }
 
-        fn save(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
+        fn update(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
             match &self.account {
                 Some(acc) => {
                     if acc.id() == account.id() {
                         self.account = Some(account);
                         Ok(())
                     } else {
-                        Err(AccountRepositoryError::WriteFailed)
+                        Err(AccountRepositoryError::UpdateFailed)
                     }
                 }
-                None => Err(AccountRepositoryError::WriteFailed),
+                None => Err(AccountRepositoryError::UpdateFailed),
             }
         }
     }

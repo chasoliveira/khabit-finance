@@ -30,7 +30,7 @@ impl AccountRepository for InMemoryAccountRepository {
             .find(|account| account.id() == id)
             .cloned())
     }
-    fn save(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
+    fn update(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
         if let Some(pos) = self
             .accounts
             .iter()
@@ -39,7 +39,7 @@ impl AccountRepository for InMemoryAccountRepository {
             self.accounts[pos] = account;
             Ok(())
         } else {
-            return Err(AccountRepositoryError::WriteFailed);
+            return Err(AccountRepositoryError::UpdateFailed);
         }
     }
 }
@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn test_save_ok() {
+    fn test_update_ok() {
         let mut repository = InMemoryAccountRepository::new();
         let account = FinanceAccount::new(
             "1".to_string(),
@@ -102,22 +102,22 @@ mod tests {
             FinanceAccountType::Checking,
         );
         repository.add(account.clone());
-        let result = repository.save(account);
+        let result = repository.update(account);
 
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_save_error() {
+    fn test_update_error() {
         let mut repository = InMemoryAccountRepository::new();
         let account = FinanceAccount::new(
             "1".to_string(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         );
-        let result = repository.save(account);
+        let result = repository.update(account);
 
         assert!(result.is_err());
-        assert_eq!(result, Err(AccountRepositoryError::WriteFailed))
+        assert_eq!(result, Err(AccountRepositoryError::UpdateFailed))
     }
 }
