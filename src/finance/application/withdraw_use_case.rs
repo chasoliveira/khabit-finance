@@ -64,6 +64,9 @@ mod tests {
     }
     impl AccountRepository for FakeAccountRepository {
         fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
+            if id == "SIMULATE_ERROR" {
+                return Err(AccountRepositoryError::AccountNotFound);
+            }
             match &self.account {
                 Some(acc) => {
                     if acc.id() == id {
@@ -187,6 +190,20 @@ mod tests {
 
         let mut repository = FakeAccountRepository::new(Some(account));
         let result = withdraw_from_account(&mut repository, "999", 500);
+        assert_eq!(result, Err(WithdrawError::AccountNotFound));
+    }
+
+    #[test]
+    fn test_withdraw_from_account_simulated_error() {
+        let mut account = FinanceAccount::new(
+            "1".to_string(),
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        account.deposit(1000).unwrap();
+
+        let mut repository = FakeAccountRepository::new(Some(account));
+        let result = withdraw_from_account(&mut repository, "SIMULATE_ERROR", 500);
         assert_eq!(result, Err(WithdrawError::AccountNotFound));
     }
 }

@@ -24,16 +24,11 @@ impl InMemoryAccountRepository {
 
 impl AccountRepository for InMemoryAccountRepository {
     fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
-        if let Some(acc) = self
+        Ok(self
             .accounts
             .iter()
             .find(|account| account.id() == id)
-            .cloned()
-        {
-            Ok(Some(acc))
-        } else {
-            Ok(None)
-        }
+            .cloned())
     }
     fn save(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
         if let Some(pos) = self
