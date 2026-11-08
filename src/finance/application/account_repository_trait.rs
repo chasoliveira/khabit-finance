@@ -3,7 +3,6 @@ use crate::finance::domain::account::FinanceAccount;
 #[derive(Debug, PartialEq)]
 pub enum AccountRepositoryError {
     AccountNotFound,
-    SaveFailed,
 }
 
 pub trait AccountRepository {

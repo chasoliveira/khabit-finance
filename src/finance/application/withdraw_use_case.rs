@@ -57,7 +57,7 @@ mod tests {
     }
     impl AccountRepository for FakeAccountRepository {
         fn find_by_id(&self, id: &str) -> Option<FinanceAccount> {
-            match self.account.clone() {
+            match &self.account {
                 Some(acc) => {
                     if acc.id() == id {
                         self.account.clone()
@@ -70,8 +70,17 @@ mod tests {
         }
 
         fn save(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
-            self.account = Some(account);
-            Ok(())
+            match &self.account {
+                Some(acc) => {
+                    if acc.id() == account.id() {
+                        self.account = Some(account);
+                        Ok(())
+                    } else {
+                        Err(AccountRepositoryError::AccountNotFound)
+                    }
+                }
+                None => Err(AccountRepositoryError::AccountNotFound),
+            }
         }
     }
 
@@ -88,13 +97,7 @@ mod tests {
 
         let result = withdraw_from_account(&mut repository, "1", 500);
         assert_eq!(result, Ok(500));
-        assert_eq!(
-            repository
-                .find_by_id(&"1".to_string())
-                .unwrap()
-                .balance_in_cents(),
-            500
-        );
+        assert_eq!(repository.find_by_id("1").unwrap().balance_in_cents(), 500);
     }
 
     #[test]
