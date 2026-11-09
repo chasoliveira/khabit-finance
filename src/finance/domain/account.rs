@@ -1,6 +1,6 @@
 use crate::finance::domain::shared::id::Id;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub struct FinanceAccountId(Id);
 
 impl FinanceAccountId {
