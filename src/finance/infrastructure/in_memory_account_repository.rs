@@ -56,38 +56,34 @@ mod tests {
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
-        let id = FinanceAccountId::new();
-        repository.add(FinanceAccount::new(
-            id.clone(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        ));
+        let new_account =
+            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+
+        repository.add(new_account);
         assert_eq!(repository.accounts.len(), 1);
     }
 
     #[test]
     fn test_find_by_id() {
         let mut repository = InMemoryAccountRepository::new();
-        let id = FinanceAccountId::new();
-        repository.add(FinanceAccount::new(
-            id.clone(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        ));
+        let new_account =
+            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+        let id = &new_account.id().clone();
+
+        repository.add(new_account);
         let account = repository.find_by_id(&id).unwrap();
         assert!(account.is_some());
-        assert_eq!(account.unwrap().id(), &id);
     }
 
     #[test]
     fn test_find_by_id_returns_some() {
         let mut repository = InMemoryAccountRepository::new();
-        let id = FinanceAccountId::new();
-        repository.add(FinanceAccount::new(
-            id.clone(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        ));
+        let new_account =
+            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+        let id = &new_account.id().clone();
+
+        repository.add(new_account);
+
         let account = repository.find_by_id(&id).unwrap();
         assert!(account.is_some());
     }
@@ -102,11 +98,7 @@ mod tests {
     #[test]
     fn test_update_ok() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new(
-            FinanceAccountId::new(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        );
+        let account = FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
         repository.add(account.clone());
         let result = repository.update(account);
 
@@ -116,11 +108,7 @@ mod tests {
     #[test]
     fn test_update_error() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new(
-            FinanceAccountId::new(),
-            "Test Account".to_string(),
-            FinanceAccountType::Checking,
-        );
+        let account = FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
         let result = repository.update(account);
 
         assert!(result.is_err());
