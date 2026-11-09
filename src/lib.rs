@@ -9,16 +9,18 @@ pub use finance::domain::account::FinanceAccountType;
 mod tests {
     use super::*;
     use crate::finance::{
-        application::account_repository_trait::AccountRepository, domain::account::FinanceAccount,
+        application::account_repository_trait::AccountRepository,
+        domain::account::{FinanceAccount, FinanceAccountId},
         infrastructure::in_memory_account_repository::InMemoryAccountRepository,
     };
 
     #[test]
     fn test_withdraw_from_account() {
+        let id = &FinanceAccountId::new();
         let repository = &mut InMemoryAccountRepository::new();
         {
             let mut account = FinanceAccount::new(
-                "1".to_string(),
+                id.clone(),
                 "My Checking Account".to_string(),
                 FinanceAccountType::Checking,
             );
@@ -26,11 +28,11 @@ mod tests {
             repository.add(account);
         }
 
-        let result = withdraw_from_account(repository, "1", 500);
+        let result = withdraw_from_account(repository, &id, 500);
         assert_eq!(result.unwrap(), 500);
 
         {
-            let existing_account = repository.find_by_id("1").unwrap().unwrap();
+            let existing_account = repository.find_by_id(&id).unwrap().unwrap();
             assert_eq!(existing_account.balance_in_cents(), 500);
         }
     }

@@ -1,3 +1,14 @@
+use crate::finance::domain::shared::id::Id;
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FinanceAccountId(Id);
+
+impl FinanceAccountId {
+    pub(crate) fn new() -> Self {
+        FinanceAccountId(Id::new())
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum FinanceAccountType {
     Cash,
@@ -26,7 +37,7 @@ impl FinanceAccountType {
 
 #[derive(Clone)]
 pub struct FinanceAccount {
-    id: String,
+    id: FinanceAccountId,
     name: String,
     account_type: FinanceAccountType,
     institution_name: Option<String>,
@@ -36,7 +47,7 @@ pub struct FinanceAccount {
 }
 
 impl FinanceAccount {
-    pub fn new(id: String, name: String, account_type: FinanceAccountType) -> Self {
+    pub fn new(id: FinanceAccountId, name: String, account_type: FinanceAccountType) -> Self {
         FinanceAccount {
             id,
             name,
@@ -48,7 +59,7 @@ impl FinanceAccount {
         }
     }
 
-    pub fn id(&self) -> &str {
+    pub fn id(&self) -> &FinanceAccountId {
         &self.id
     }
 
@@ -124,13 +135,14 @@ mod tests {
 
     #[test]
     fn test_account_creation() {
+        let id = &FinanceAccountId::new();
         let account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
 
-        assert_eq!(account.id(), "1");
+        assert_eq!(account.id(), id);
         assert_eq!(account.name(), "My Checking Account");
         assert_eq!(account.account_type, FinanceAccountType::Checking);
         assert_eq!(account.institution_name.as_deref(), None);
@@ -141,8 +153,9 @@ mod tests {
 
     #[test]
     fn test_account_deposit() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -154,8 +167,9 @@ mod tests {
 
     #[test]
     fn test_account_archived_deposit() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -171,8 +185,9 @@ mod tests {
 
     #[test]
     fn test_account_archived_deposit_invalid() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -188,8 +203,9 @@ mod tests {
 
     #[test]
     fn test_account_deposit_negative() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -203,8 +219,9 @@ mod tests {
 
     #[test]
     fn test_account_deposit_zero() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -219,8 +236,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -234,8 +252,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_archived() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -250,8 +269,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_archived_negative() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -266,8 +286,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_insufficient_funds() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -281,8 +302,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_negative() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -297,8 +319,9 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_zero() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );

@@ -1,7 +1,7 @@
 use crate::finance::application::account_repository_trait::{
     AccountRepository, AccountRepositoryError,
 };
-use crate::finance::domain::account::FinanceAccount;
+use crate::finance::domain::account::{FinanceAccount, FinanceAccountId};
 
 pub struct InMemoryAccountRepository {
     // This is a placeholder for the in-memory storage of accounts.
@@ -23,7 +23,10 @@ impl InMemoryAccountRepository {
 }
 
 impl AccountRepository for InMemoryAccountRepository {
-    fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
+    fn find_by_id(
+        &self,
+        id: &FinanceAccountId,
+    ) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
         Ok(self
             .accounts
             .iter()
@@ -53,8 +56,9 @@ mod tests {
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
+        let id = FinanceAccountId::new();
         repository.add(FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         ));
@@ -64,32 +68,34 @@ mod tests {
     #[test]
     fn test_find_by_id() {
         let mut repository = InMemoryAccountRepository::new();
+        let id = FinanceAccountId::new();
         repository.add(FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         ));
-        let account = repository.find_by_id("1").unwrap();
+        let account = repository.find_by_id(&id).unwrap();
         assert!(account.is_some());
-        assert_eq!(account.unwrap().id(), "1");
+        assert_eq!(account.unwrap().id(), &id);
     }
 
     #[test]
     fn test_find_by_id_returns_some() {
         let mut repository = InMemoryAccountRepository::new();
+        let id = FinanceAccountId::new();
         repository.add(FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         ));
-        let account = repository.find_by_id("1").unwrap();
+        let account = repository.find_by_id(&id).unwrap();
         assert!(account.is_some());
     }
 
     #[test]
     fn test_find_by_id_returns_none() {
         let repository = InMemoryAccountRepository::new();
-        let account = repository.find_by_id("nonexistent").unwrap();
+        let account = repository.find_by_id(&FinanceAccountId::new()).unwrap();
         assert!(account.is_none());
     }
 
@@ -97,7 +103,7 @@ mod tests {
     fn test_update_ok() {
         let mut repository = InMemoryAccountRepository::new();
         let account = FinanceAccount::new(
-            "1".to_string(),
+            FinanceAccountId::new(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         );
@@ -111,7 +117,7 @@ mod tests {
     fn test_update_error() {
         let mut repository = InMemoryAccountRepository::new();
         let account = FinanceAccount::new(
-            "1".to_string(),
+            FinanceAccountId::new(),
             "Test Account".to_string(),
             FinanceAccountType::Checking,
         );

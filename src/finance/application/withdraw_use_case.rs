@@ -1,6 +1,9 @@
 use crate::{
     FinanceAccountError,
-    finance::application::account_repository_trait::{AccountRepository, AccountRepositoryError},
+    finance::{
+        application::account_repository_trait::{AccountRepository, AccountRepositoryError},
+        domain::account::FinanceAccountId,
+    },
 };
 
 #[derive(PartialEq, Debug)]
@@ -32,7 +35,7 @@ impl From<AccountRepositoryError> for WithdrawError {
 
 pub fn withdraw_from_account<R>(
     repository: &mut R,
-    account_id: &str,
+    account_id: &FinanceAccountId,
     amount_in_cents: i64,
 ) -> Result<i64, WithdrawError>
 where
@@ -54,19 +57,26 @@ mod tests {
     use crate::finance::application::account_repository_trait::{
         AccountRepository, AccountRepositoryError,
     };
-    use crate::finance::domain::account::{FinanceAccount, FinanceAccountType};
+    use crate::finance::domain::account::{FinanceAccount, FinanceAccountId, FinanceAccountType};
 
     struct FakeAccountRepository {
         account: Option<FinanceAccount>,
+        with_error: bool,
     }
     impl FakeAccountRepository {
-        fn new(account: Option<FinanceAccount>) -> Self {
-            FakeAccountRepository { account }
+        fn new(account: Option<FinanceAccount>, with_error: bool) -> Self {
+            FakeAccountRepository {
+                account,
+                with_error,
+            }
         }
     }
     impl AccountRepository for FakeAccountRepository {
-        fn find_by_id(&self, id: &str) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
-            if id == "SIMULATE_ERROR" {
+        fn find_by_id(
+            &self,
+            id: &FinanceAccountId,
+        ) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
+            if self.with_error {
                 return Err(AccountRepositoryError::ReadFailed);
             }
             match &self.account {
@@ -98,20 +108,21 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
 
-        let mut repository = FakeAccountRepository::new(Some(account));
+        let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, "1", 500);
+        let result = withdraw_from_account(&mut repository, &id, 500);
         assert_eq!(result, Ok(500));
         assert_eq!(
             repository
-                .find_by_id("1")
+                .find_by_id(&id)
                 .unwrap()
                 .unwrap()
                 .balance_in_cents(),
@@ -121,36 +132,38 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_insufficient_funds() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
 
-        let mut repository = FakeAccountRepository::new(Some(account));
+        let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, "1", 1500);
+        let result = withdraw_from_account(&mut repository, &id, 1500);
         assert_eq!(result, Err(WithdrawError::InsufficientFunds));
-        let account = repository.find_by_id("1").unwrap().unwrap();
+        let account = repository.find_by_id(&id).unwrap().unwrap();
         assert_eq!(account.balance_in_cents(), 1000);
     }
 
     #[test]
     fn test_withdraw_from_account_invalid_amount() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
-        let mut repository = FakeAccountRepository::new(Some(account));
+        let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, "1", -500);
+        let result = withdraw_from_account(&mut repository, &id, -500);
         assert_eq!(result, Err(WithdrawError::InvalidAmount));
         assert_eq!(
             repository
-                .find_by_id("1")
+                .find_by_id(&id)
                 .unwrap()
                 .unwrap()
                 .balance_in_cents(),
@@ -160,20 +173,21 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_account_archived() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
         account.archive();
-        let mut repository = FakeAccountRepository::new(Some(account));
+        let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, "1", 500);
+        let result = withdraw_from_account(&mut repository, &id, 500);
         assert_eq!(result, Err(WithdrawError::AccountArchived));
         assert_eq!(
             repository
-                .find_by_id("1")
+                .find_by_id(&id)
                 .unwrap()
                 .unwrap()
                 .balance_in_cents(),
@@ -183,29 +197,31 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account_account_not_found() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
 
-        let mut repository = FakeAccountRepository::new(Some(account));
-        let result = withdraw_from_account(&mut repository, "999", 500);
+        let mut repository = FakeAccountRepository::new(Some(account), false);
+        let result = withdraw_from_account(&mut repository, &FinanceAccountId::new(), 500);
         assert_eq!(result, Err(WithdrawError::AccountNotFound));
     }
 
     #[test]
     fn test_withdraw_from_account_simulated_error() {
+        let id = &FinanceAccountId::new();
         let mut account = FinanceAccount::new(
-            "1".to_string(),
+            id.clone(),
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
         account.deposit(1000).unwrap();
 
-        let mut repository = FakeAccountRepository::new(Some(account));
-        let result = withdraw_from_account(&mut repository, "SIMULATE_ERROR", 500);
+        let mut repository = FakeAccountRepository::new(Some(account), true);
+        let result = withdraw_from_account(&mut repository, &id, 500);
         assert_eq!(result, Err(WithdrawError::RepositoryFailure));
     }
 }
