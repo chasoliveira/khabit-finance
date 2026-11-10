@@ -48,7 +48,7 @@ impl Money {
         self.amount_in_cents == 0
     }
 
-    pub fn is_less_or_eq_zero(&self) -> bool {
+    pub fn is_non_positive(&self) -> bool {
         self.amount_in_cents <= 0
     }
 
@@ -73,6 +73,18 @@ mod tests {
         let money = Money::new(100_000, Currency::brl());
         assert_eq!(money.amount_in_cents(), 100_000);
         assert_eq!(money.currency(), &Currency::brl());
+    }
+
+    #[test]
+    fn tes_is_non_positive_return_false() {
+        let money = Money::new(100_000, Currency::brl());
+        assert!(!money.is_non_positive());
+    }
+
+    #[test]
+    fn tes_is_non_positive_return_true() {
+        let money = Money::new(-100_000, Currency::brl());
+        assert!(money.is_non_positive());
     }
 
     #[test]

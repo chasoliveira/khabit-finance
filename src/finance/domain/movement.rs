@@ -1,13 +1,6 @@
-use crate::{
-    FinanceAccount,
-    finance::domain::{
-        account::FinanceAccountId,
-        shared::{
-            currency::Currency,
-            id::Id,
-            money::{Money, MoneyError},
-        },
-    },
+use crate::finance::domain::{
+    account::FinanceAccountId,
+    shared::{id::Id, money::Money},
 };
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
@@ -46,7 +39,7 @@ impl Movement {
         amount: Money,
         description: Option<String>,
     ) -> Result<Movement, MovementError> {
-        if amount.is_less_or_eq_zero() {
+        if amount.is_non_positive() {
             return Err(MovementError::InvalidAmount);
         }
         Ok(Movement {
