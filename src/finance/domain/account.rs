@@ -1,4 +1,8 @@
-use crate::finance::domain::shared::id::Id;
+use crate::finance::domain::shared::{
+    currency::Currency,
+    id::Id,
+    money::{Money, MoneyError},
+};
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub struct FinanceAccountId(Id);
@@ -24,6 +28,14 @@ pub enum FinanceAccountError {
     AccountArchived,
 }
 
+impl From<MoneyError> for FinanceAccountError {
+    fn from(error: MoneyError) -> Self {
+        match error {
+            MoneyError::CurrencyMismatch => Self::InvalidAmount,
+        }
+    }
+}
+
 impl FinanceAccountType {
     pub fn is_spendable(&self) -> bool {
         match self {
@@ -42,7 +54,7 @@ pub struct FinanceAccount {
     account_type: FinanceAccountType,
     institution_name: Option<String>,
     description: Option<String>,
-    balance_in_cents: i64,
+    balance: Money,
     is_archived: bool,
 }
 
@@ -54,7 +66,7 @@ impl FinanceAccount {
             account_type,
             institution_name: None,
             description: None,
-            balance_in_cents: 0,
+            balance: Money::zero(Currency::brl()),
             is_archived: false,
         }
     }
@@ -67,12 +79,14 @@ impl FinanceAccount {
         &self.name
     }
 
-    pub fn balance_in_cents(&self) -> i64 {
-        self.balance_in_cents
+    pub fn balance(&self) -> &Money {
+        &self.balance
     }
 
-    fn validate_amount(&self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
-        if amount_in_cents <= 0 {
+    fn validate_amount(&self, amount: &Money) -> Result<(), FinanceAccountError> {
+        if amount.amount_in_cents() <= 0 {
+            Err(FinanceAccountError::InvalidAmount)
+        } else if self.balance.currency() != amount.currency() {
             Err(FinanceAccountError::InvalidAmount)
         } else {
             Ok(())
@@ -87,22 +101,26 @@ impl FinanceAccount {
         }
     }
 
-    pub fn deposit(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+    pub fn deposit(&mut self, amount: &Money) -> Result<(), FinanceAccountError> {
         self.ensure_active()?;
-        self.validate_amount(amount_in_cents)?;
+        self.validate_amount(&amount)?;
 
-        self.balance_in_cents += amount_in_cents;
+        let balance = self.balance.add(&amount)?;
+
+        self.balance = balance;
+
         Ok(())
     }
 
-    pub fn withdraw(&mut self, amount_in_cents: i64) -> Result<(), FinanceAccountError> {
+    pub fn withdraw(&mut self, amount: &Money) -> Result<(), FinanceAccountError> {
         self.ensure_active()?;
-        self.validate_amount(amount_in_cents)?;
+        self.validate_amount(amount)?;
 
-        if self.balance_in_cents < amount_in_cents {
+        if self.balance.amount_in_cents() < amount.amount_in_cents() {
             return Err(FinanceAccountError::InsufficientFunds);
         }
-        self.balance_in_cents -= amount_in_cents;
+        let balance = self.balance.subtract(&amount)?;
+        self.balance = balance;
         Ok(())
     }
 
@@ -147,7 +165,7 @@ mod tests {
         assert_eq!(account.account_type, FinanceAccountType::Checking);
         assert_eq!(account.institution_name.as_deref(), None);
         assert_eq!(account.description.as_deref(), None);
-        assert_eq!(account.balance_in_cents(), 0);
+        assert_eq!(account.balance.amount_in_cents(), 0);
         assert!(!account.is_archived());
     }
 
@@ -158,9 +176,9 @@ mod tests {
             FinanceAccountType::Checking,
         );
 
-        let result = account.deposit(1000);
+        let result = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result.is_ok());
-        assert_eq!(account.balance_in_cents(), 1000);
+        assert_eq!(account.balance.amount_in_cents(), 1000);
     }
 
     #[test]
@@ -171,11 +189,11 @@ mod tests {
         );
         account.archive();
 
-        let result = account.deposit(1000);
+        let result = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
 
-        assert_eq!(account.balance_in_cents(), 0);
+        assert_eq!(account.balance.amount_in_cents(), 0);
         assert!(account.is_archived());
     }
 
@@ -187,11 +205,11 @@ mod tests {
         );
         account.archive();
 
-        let result = account.deposit(-1000);
+        let result = account.deposit(&Money::new(-1000, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
 
-        assert_eq!(account.balance_in_cents(), 0);
+        assert_eq!(account.balance.amount_in_cents(), 0);
         assert!(account.is_archived());
     }
 
@@ -201,12 +219,25 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        let result = account.deposit(-1000);
+        let result = account.deposit(&Money::new(-1000, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
 
-        let balance = account.balance_in_cents();
+        let balance = account.balance.amount_in_cents();
         assert_eq!(balance, 0);
+    }
+
+    #[test]
+    fn test_account_deposit_invalid_currency() {
+        let mut account = FinanceAccount::new(
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        let result = account.deposit(&Money::new(800, Currency::usa()));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+
+        assert_eq!(account.balance.amount_in_cents(), 0);
     }
 
     #[test]
@@ -216,11 +247,11 @@ mod tests {
             FinanceAccountType::Checking,
         );
 
-        let result = account.deposit(0);
+        let result = account.deposit(&Money::new(0, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
 
-        let balance = account.balance_in_cents();
+        let balance = account.balance.amount_in_cents();
         assert_eq!(balance, 0);
     }
 
@@ -230,12 +261,12 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        let result_deposit = account.deposit(1000);
+        let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
-        let result = account.withdraw(500);
+        let result = account.withdraw(&Money::new(500, Currency::brl()));
         assert!(result.is_ok());
-        assert_eq!(account.balance_in_cents(), 500);
+        assert_eq!(account.balance.amount_in_cents(), 500);
     }
 
     #[test]
@@ -246,10 +277,10 @@ mod tests {
         );
         account.archive();
 
-        let result = account.withdraw(500);
+        let result = account.withdraw(&Money::new(500, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
-        assert_eq!(account.balance_in_cents(), 0);
+        assert_eq!(account.balance.amount_in_cents(), 0);
         assert!(account.is_archived());
     }
 
@@ -261,10 +292,10 @@ mod tests {
         );
         account.archive();
 
-        let result = account.withdraw(-500);
+        let result = account.withdraw(&Money::new(-500, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::AccountArchived);
-        assert_eq!(account.balance_in_cents(), 0);
+        assert_eq!(account.balance.amount_in_cents(), 0);
         assert!(account.is_archived());
     }
 
@@ -274,12 +305,12 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
-        let result = account.withdraw(1500);
+        let result = account.withdraw(&Money::new(1500, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::InsufficientFunds);
-        assert_eq!(account.balance_in_cents(), 1000);
+        assert_eq!(account.balance.amount_in_cents(), 1000);
     }
 
     #[test]
@@ -288,13 +319,26 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        let result_deposit = account.deposit(1000);
+        let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
-        let result = account.withdraw(-500);
+        let result = account.withdraw(&Money::new(-500, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
-        assert_eq!(account.balance_in_cents(), 1000);
+        assert_eq!(account.balance.amount_in_cents(), 1000);
+    }
+
+    #[test]
+    fn test_account_withdraw_invalid_currency() {
+        let mut account = FinanceAccount::new(
+            "My Checking Account".to_string(),
+            FinanceAccountType::Checking,
+        );
+        let result = account.withdraw(&Money::new(800, Currency::usa()));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+
+        assert_eq!(account.balance.amount_in_cents(), 0);
     }
 
     #[test]
@@ -303,12 +347,12 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        let result_deposit = account.deposit(1000);
+        let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
-        let result = account.withdraw(0);
+        let result = account.withdraw(&Money::new(0, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
-        assert_eq!(account.balance_in_cents(), 1000);
+        assert_eq!(account.balance.amount_in_cents(), 1000);
     }
 }

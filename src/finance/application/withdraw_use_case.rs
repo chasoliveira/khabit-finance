@@ -2,7 +2,7 @@ use crate::{
     FinanceAccountError,
     finance::{
         application::account_repository_trait::{AccountRepository, AccountRepositoryError},
-        domain::account::FinanceAccountId,
+        domain::{account::FinanceAccountId, shared::money::Money},
     },
 };
 
@@ -36,16 +36,16 @@ impl From<AccountRepositoryError> for WithdrawError {
 pub fn withdraw_from_account<R>(
     repository: &mut R,
     account_id: &FinanceAccountId,
-    amount_in_cents: i64,
-) -> Result<i64, WithdrawError>
+    amount: Money,
+) -> Result<Money, WithdrawError>
 where
     R: AccountRepository,
 {
     let Some(mut account) = repository.find_by_id(account_id)? else {
         return Err(WithdrawError::AccountNotFound);
     };
-    account.withdraw(amount_in_cents)?;
-    let balance = account.balance_in_cents();
+    account.withdraw(&amount)?;
+    let balance = account.balance().to_owned();
     repository.update(account)?;
 
     Ok(balance)
@@ -58,6 +58,7 @@ mod tests {
         AccountRepository, AccountRepositoryError,
     };
     use crate::finance::domain::account::{FinanceAccount, FinanceAccountId, FinanceAccountType};
+    use crate::finance::domain::shared::currency::Currency;
 
     struct FakeAccountRepository {
         account: Option<FinanceAccount>,
@@ -112,20 +113,16 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         let id = &account.id().clone();
 
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, &id, 500);
-        assert_eq!(result, Ok(500));
+        let result = withdraw_from_account(&mut repository, &id, Money::new(500, Currency::brl()));
+        assert_eq!(result, Ok(Money::new(500, Currency::brl())));
         assert_eq!(
-            repository
-                .find_by_id(&id)
-                .unwrap()
-                .unwrap()
-                .balance_in_cents(),
-            500
+            repository.find_by_id(&id).unwrap().unwrap().balance(),
+            &Money::new(500, Currency::brl())
         );
     }
 
@@ -135,15 +132,15 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         let id = &account.id().clone();
 
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, &id, 1500);
+        let result = withdraw_from_account(&mut repository, &id, Money::new(1500, Currency::brl()));
         assert_eq!(result, Err(WithdrawError::InsufficientFunds));
         let account = repository.find_by_id(&id).unwrap().unwrap();
-        assert_eq!(account.balance_in_cents(), 1000);
+        assert_eq!(account.balance(), &Money::new(1000, Currency::brl()));
     }
 
     #[test]
@@ -152,19 +149,15 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         let id = &account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, &id, -500);
+        let result = withdraw_from_account(&mut repository, &id, Money::new(-500, Currency::brl()));
         assert_eq!(result, Err(WithdrawError::InvalidAmount));
         assert_eq!(
-            repository
-                .find_by_id(&id)
-                .unwrap()
-                .unwrap()
-                .balance_in_cents(),
-            1000
+            repository.find_by_id(&id).unwrap().unwrap().balance(),
+            &Money::new(1000, Currency::brl())
         );
     }
 
@@ -174,20 +167,16 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         account.archive();
         let id = &account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
-        let result = withdraw_from_account(&mut repository, &id, 500);
+        let result = withdraw_from_account(&mut repository, &id, Money::new(500, Currency::brl()));
         assert_eq!(result, Err(WithdrawError::AccountArchived));
         assert_eq!(
-            repository
-                .find_by_id(&id)
-                .unwrap()
-                .unwrap()
-                .balance_in_cents(),
-            1000
+            repository.find_by_id(&id).unwrap().unwrap().balance(),
+            &Money::new(1000, Currency::brl())
         );
     }
 
@@ -197,10 +186,14 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
         let mut repository = FakeAccountRepository::new(Some(account), false);
-        let result = withdraw_from_account(&mut repository, &FinanceAccountId::new(), 500);
+        let result = withdraw_from_account(
+            &mut repository,
+            &FinanceAccountId::new(),
+            Money::new(500, Currency::brl()),
+        );
         assert_eq!(result, Err(WithdrawError::AccountNotFound));
     }
 
@@ -210,10 +203,10 @@ mod tests {
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
         );
-        account.deposit(1000).unwrap();
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         let id = &account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), true);
-        let result = withdraw_from_account(&mut repository, id, 500);
+        let result = withdraw_from_account(&mut repository, id, Money::new(500, Currency::brl()));
         assert_eq!(result, Err(WithdrawError::RepositoryFailure));
     }
 }

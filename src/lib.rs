@@ -9,7 +9,11 @@ pub use finance::domain::account::FinanceAccountType;
 mod tests {
     use super::*;
     use crate::finance::{
-        application::account_repository_trait::AccountRepository, domain::account::FinanceAccount,
+        application::account_repository_trait::AccountRepository,
+        domain::{
+            account::FinanceAccount,
+            shared::{currency::Currency, money::Money},
+        },
         infrastructure::in_memory_account_repository::InMemoryAccountRepository,
     };
 
@@ -22,16 +26,16 @@ mod tests {
         let id = &account.id().clone();
         let repository = &mut InMemoryAccountRepository::new();
         {
-            account.deposit(1000).unwrap();
+            account.deposit(&Money::new(1000, Currency::brl())).unwrap();
             repository.add(account);
         }
 
-        let result = withdraw_from_account(repository, &id, 500);
-        assert_eq!(result.unwrap(), 500);
+        let result = withdraw_from_account(repository, &id, Money::new(500, Currency::brl()));
+        assert_eq!(result, Ok(Money::new(500, Currency::brl())));
 
         {
             let existing_account = repository.find_by_id(&id).unwrap().unwrap();
-            assert_eq!(existing_account.balance_in_cents(), 500);
+            assert_eq!(existing_account.balance().amount_in_cents(), 500);
         }
     }
 }

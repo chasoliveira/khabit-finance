@@ -24,7 +24,7 @@ impl Money {
             return Err(MoneyError::CurrencyMismatch);
         }
         Ok(Money {
-            amount_in_cents: &self.amount_in_cents + other.amount_in_cents,
+            amount_in_cents: self.amount_in_cents + other.amount_in_cents,
             currency: self.currency.clone(),
         })
     }
@@ -34,9 +34,26 @@ impl Money {
         }
 
         Ok(Money {
-            amount_in_cents: &self.amount_in_cents - other.amount_in_cents,
+            amount_in_cents: self.amount_in_cents - other.amount_in_cents,
             currency: self.currency.clone(),
         })
+    }
+    pub fn zero(currency: Currency) -> Self {
+        Self {
+            amount_in_cents: 0,
+            currency,
+        }
+    }
+    pub fn is_zero(&self) -> bool {
+        self.amount_in_cents == 0
+    }
+
+    pub fn amount_in_cents(&self) -> i64 {
+        self.amount_in_cents
+    }
+
+    pub fn currency(&self) -> &Currency {
+        &self.currency
     }
 }
 
@@ -46,6 +63,13 @@ mod tests {
         currency::Currency,
         money::{Money, MoneyError},
     };
+
+    #[test]
+    fn creates_money() {
+        let money = Money::new(100_000, Currency::brl());
+        assert_eq!(money.amount_in_cents(), 100_000);
+        assert_eq!(money.currency(), &Currency::brl());
+    }
 
     #[test]
     fn add_should_return_self_plus_other() {
