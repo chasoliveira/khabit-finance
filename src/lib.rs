@@ -22,8 +22,9 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
-        let id = &account.id().clone();
+        let id = account.id().clone();
         let repository = &mut InMemoryAccountRepository::new();
         {
             account.deposit(&Money::new(1000, Currency::brl())).unwrap();

@@ -51,13 +51,17 @@ impl AccountRepository for InMemoryAccountRepository {
 mod tests {
     use super::*;
     use crate::finance::application::account_repository_trait::AccountRepository;
+    use crate::finance::domain::shared::currency::Currency;
     use crate::{FinanceAccount, FinanceAccountType};
 
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account =
-            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+        let new_account = FinanceAccount::new(
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+            Currency::brl(),
+        );
 
         repository.add(new_account);
         assert_eq!(repository.accounts.len(), 1);
@@ -66,9 +70,12 @@ mod tests {
     #[test]
     fn test_find_by_id() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account =
-            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
-        let id = &new_account.id().clone();
+        let new_account = FinanceAccount::new(
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+            Currency::brl(),
+        );
+        let id = new_account.id().clone();
 
         repository.add(new_account);
         let account = repository.find_by_id(&id).unwrap();
@@ -78,9 +85,12 @@ mod tests {
     #[test]
     fn test_find_by_id_returns_some() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account =
-            FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
-        let id = &new_account.id().clone();
+        let new_account = FinanceAccount::new(
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+            Currency::brl(),
+        );
+        let id = new_account.id().clone();
 
         repository.add(new_account);
 
@@ -98,7 +108,11 @@ mod tests {
     #[test]
     fn test_update_ok() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+        let account = FinanceAccount::new(
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+            Currency::brl(),
+        );
         repository.add(account.clone());
         let result = repository.update(account);
 
@@ -108,7 +122,11 @@ mod tests {
     #[test]
     fn test_update_error() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new("Test Account".to_string(), FinanceAccountType::Checking);
+        let account = FinanceAccount::new(
+            "Test Account".to_string(),
+            FinanceAccountType::Checking,
+            Currency::brl(),
+        );
         let result = repository.update(account);
 
         assert!(result.is_err());

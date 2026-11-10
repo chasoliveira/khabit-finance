@@ -13,6 +13,7 @@ pub enum WithdrawError {
     AccountArchived,
     InsufficientFunds,
     RepositoryFailure,
+    CurrencyMismatch,
 }
 
 impl From<FinanceAccountError> for WithdrawError {
@@ -21,6 +22,7 @@ impl From<FinanceAccountError> for WithdrawError {
             FinanceAccountError::AccountArchived => Self::AccountArchived,
             FinanceAccountError::InsufficientFunds => Self::InsufficientFunds,
             FinanceAccountError::InvalidAmount => Self::InvalidAmount,
+            FinanceAccountError::CurrencyMismatch => Self::CurrencyMismatch,
         }
     }
 }
@@ -112,9 +114,10 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
-        let id = &account.id().clone();
+        let id = account.id().clone();
 
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
@@ -131,9 +134,10 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
-        let id = &account.id().clone();
+        let id = account.id().clone();
 
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
@@ -148,9 +152,10 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
-        let id = &account.id().clone();
+        let id = account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
         let result = withdraw_from_account(&mut repository, &id, Money::new(-500, Currency::brl()));
@@ -166,10 +171,11 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
         account.archive();
-        let id = &account.id().clone();
+        let id = account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), false);
 
         let result = withdraw_from_account(&mut repository, &id, Money::new(500, Currency::brl()));
@@ -185,6 +191,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
@@ -202,11 +209,12 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
-        let id = &account.id().clone();
+        let id = account.id().clone();
         let mut repository = FakeAccountRepository::new(Some(account), true);
-        let result = withdraw_from_account(&mut repository, id, Money::new(500, Currency::brl()));
+        let result = withdraw_from_account(&mut repository, &id, Money::new(500, Currency::brl()));
         assert_eq!(result, Err(WithdrawError::RepositoryFailure));
     }
 }

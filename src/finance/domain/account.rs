@@ -26,12 +26,13 @@ pub enum FinanceAccountError {
     InvalidAmount,
     InsufficientFunds,
     AccountArchived,
+    CurrencyMismatch,
 }
 
 impl From<MoneyError> for FinanceAccountError {
     fn from(error: MoneyError) -> Self {
         match error {
-            MoneyError::CurrencyMismatch => Self::InvalidAmount,
+            MoneyError::CurrencyMismatch => Self::CurrencyMismatch,
         }
     }
 }
@@ -59,14 +60,14 @@ pub struct FinanceAccount {
 }
 
 impl FinanceAccount {
-    pub fn new(name: String, account_type: FinanceAccountType) -> Self {
+    pub fn new(name: String, account_type: FinanceAccountType, currency: Currency) -> Self {
         FinanceAccount {
             id: FinanceAccountId(Id::new()),
             name,
             account_type,
             institution_name: None,
             description: None,
-            balance: Money::zero(Currency::brl()),
+            balance: Money::zero(currency),
             is_archived: false,
         }
     }
@@ -87,7 +88,7 @@ impl FinanceAccount {
         if amount.amount_in_cents() <= 0 {
             Err(FinanceAccountError::InvalidAmount)
         } else if self.balance.currency() != amount.currency() {
-            Err(FinanceAccountError::InvalidAmount)
+            Err(FinanceAccountError::CurrencyMismatch)
         } else {
             Ok(())
         }
@@ -158,6 +159,7 @@ mod tests {
         let account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
 
         assert_eq!(account.id().0.value().get_version(), Some(Version::Random));
@@ -174,6 +176,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
 
         let result = account.deposit(&Money::new(1000, Currency::brl()));
@@ -186,6 +189,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.archive();
 
@@ -202,6 +206,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.archive();
 
@@ -218,6 +223,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result = account.deposit(&Money::new(-1000, Currency::brl()));
         assert!(result.is_err());
@@ -232,10 +238,11 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result = account.deposit(&Money::new(800, Currency::usa()));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+        assert_eq!(result.unwrap_err(), FinanceAccountError::CurrencyMismatch);
 
         assert_eq!(account.balance.amount_in_cents(), 0);
     }
@@ -245,6 +252,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
 
         let result = account.deposit(&Money::new(0, Currency::brl()));
@@ -260,6 +268,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
@@ -274,6 +283,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.archive();
 
@@ -289,6 +299,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.archive();
 
@@ -304,6 +315,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
@@ -318,6 +330,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
@@ -333,10 +346,11 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result = account.withdraw(&Money::new(800, Currency::usa()));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FinanceAccountError::InvalidAmount);
+        assert_eq!(result.unwrap_err(), FinanceAccountError::CurrencyMismatch);
 
         assert_eq!(account.balance.amount_in_cents(), 0);
     }
@@ -346,6 +360,7 @@ mod tests {
         let mut account = FinanceAccount::new(
             "My Checking Account".to_string(),
             FinanceAccountType::Checking,
+            Currency::brl(),
         );
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
