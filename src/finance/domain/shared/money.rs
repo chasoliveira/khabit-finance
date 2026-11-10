@@ -48,6 +48,10 @@ impl Money {
         self.amount_in_cents == 0
     }
 
+    pub fn is_less_or_eq_zero(&self) -> bool {
+        self.amount_in_cents <= 0
+    }
+
     pub fn amount_in_cents(&self) -> i64 {
         self.amount_in_cents
     }
