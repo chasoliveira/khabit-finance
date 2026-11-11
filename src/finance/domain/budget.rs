@@ -1,6 +1,6 @@
 use crate::finance::domain::{
     account::FinanceAccountId,
-    movement::{Movement, MovementError, MovementType},
+    movement::{Movement, MovementError, MovementId, MovementType},
     shared::{currency::Currency, id::Id, money::Money},
 };
 
@@ -33,6 +33,7 @@ pub struct Budget {
     name: String,
     currency: Currency,
     is_archived: bool,
+    movements: Vec<Movement>,
 }
 
 impl Budget {
@@ -42,6 +43,7 @@ impl Budget {
             name,
             currency,
             is_archived: false,
+            movements: Vec::new(),
         }
     }
 
@@ -60,42 +62,44 @@ impl Budget {
     pub fn is_archived(&self) -> bool {
         self.is_archived
     }
+    pub fn movements(&self) -> &[Movement] {
+        &self.movements
+    }
 
     pub fn archive(&mut self) {
         self.is_archived = true;
     }
-    pub fn validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
+
+    fn _validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
         if self.currency() != amount.currency() {
             return Err(BudgetError::CurrencyMismatch);
         }
         if self.is_archived() {
             return Err(BudgetError::Archived);
         }
-        if amount.amount_in_cents() <= 0 {
-            return Err(BudgetError::InvalidMovementAmount);
-        }
 
         Ok(())
     }
 
     pub fn create_movement(
-        &self,
+        &mut self,
         account_id: FinanceAccountId,
         movement_type: MovementType,
         amount: Money,
-        decription: Option<String>,
-    ) -> Result<Movement, BudgetError> {
-        self.validate_movement_creation(&amount)?;
+        description: Option<String>,
+    ) -> Result<MovementId, BudgetError> {
+        self._validate_movement_creation(&amount)?;
 
         let movement = Movement::new(
             self.id().clone(),
             account_id,
             movement_type,
             amount,
-            decription,
+            description,
         )?;
-
-        Ok(movement)
+        let movement_id = movement.id().clone();
+        self.movements.push(movement);
+        Ok(movement_id)
     }
 }
 
@@ -113,6 +117,7 @@ mod tests {
         assert_eq!(budget.name(), "Monthly expenses");
         assert_eq!(budget.currency(), &Currency::brl());
         assert_eq!(budget.is_archived(), false);
+        assert_eq!(budget.movements().len(), 0)
     }
 
     #[test]
@@ -131,8 +136,21 @@ mod tests {
     }
 
     #[test]
+    fn create_movement_success() {
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
+        let account_id = FinanceAccountId::new();
+        let movement_type = MovementType::Credit;
+        let amount = Money::new(100, Currency::usa());
+        let decription = Some("text".to_string());
+        let result = budget.create_movement(account_id, movement_type, amount, decription);
+
+        assert!(result.is_ok());
+        assert_eq!(budget.movements().len(), 1)
+    }
+
+    #[test]
     fn create_movement_returns_error_for_currency_mismatch() {
-        let budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = FinanceAccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::brl());
@@ -141,6 +159,7 @@ mod tests {
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), BudgetError::CurrencyMismatch);
+        assert_eq!(budget.movements().len(), 0)
     }
 
     #[test]
@@ -157,11 +176,12 @@ mod tests {
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), BudgetError::Archived);
+        assert_eq!(budget.movements().len(), 0)
     }
 
     #[test]
     fn create_movement_returns_error_when_amount_is_non_positive() {
-        let budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
 
         {
             let result = budget.create_movement(
@@ -173,6 +193,7 @@ mod tests {
 
             assert!(result.is_err());
             assert_eq!(result.unwrap_err(), BudgetError::InvalidMovementAmount);
+            assert_eq!(budget.movements().len(), 0)
         }
 
         {
@@ -185,6 +206,7 @@ mod tests {
 
             assert!(result.is_err());
             assert_eq!(result.unwrap_err(), BudgetError::InvalidMovementAmount);
+            assert_eq!(budget.movements().len(), 0)
         }
     }
 }

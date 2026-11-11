@@ -35,7 +35,7 @@ pub struct Movement {
 }
 
 impl Movement {
-    pub fn new(
+    pub(crate) fn new(
         budget_id: BudgetId,
         account_id: FinanceAccountId,
         movement_type: MovementType,
