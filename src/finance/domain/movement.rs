@@ -1,5 +1,6 @@
 use crate::finance::domain::{
     account::FinanceAccountId,
+    budget::BudgetId,
     shared::{id::Id, money::Money},
 };
 
@@ -26,6 +27,7 @@ pub enum MovementType {
 #[derive(Clone)]
 pub struct Movement {
     id: MovementId,
+    budget_id: BudgetId,
     account_id: FinanceAccountId,
     movement_type: MovementType,
     amount: Money,
@@ -34,6 +36,7 @@ pub struct Movement {
 
 impl Movement {
     pub fn new(
+        budget_id: BudgetId,
         account_id: FinanceAccountId,
         movement_type: MovementType,
         amount: Money,
@@ -44,6 +47,7 @@ impl Movement {
         }
         Ok(Movement {
             id: MovementId(Id::new()),
+            budget_id,
             account_id,
             movement_type,
             amount,
@@ -69,6 +73,7 @@ mod tests {
 
     use crate::finance::domain::{
         account::FinanceAccountId,
+        budget::BudgetId,
         movement::{Movement, MovementError, MovementType},
         shared::{currency::Currency, money::Money},
     };
@@ -76,6 +81,7 @@ mod tests {
     #[test]
     fn test_movement_creation() {
         let movement = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Credit,
             Money::new(100, Currency::brl()),
@@ -92,6 +98,7 @@ mod tests {
     #[test]
     fn creates_valid_credit() {
         let movement = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Credit,
             Money::new(100, Currency::brl()),
@@ -106,6 +113,7 @@ mod tests {
     #[test]
     fn creates_valid_debit() {
         let movement = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Debit,
             Money::new(100, Currency::brl()),
@@ -120,6 +128,7 @@ mod tests {
     #[test]
     fn rejects_zero_amount() {
         let result = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Credit,
             Money::zero(Currency::brl()),
@@ -132,6 +141,7 @@ mod tests {
     #[test]
     fn rejects_negative_amount() {
         let result = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Debit,
             Money::new(-1, Currency::brl()),
@@ -140,11 +150,26 @@ mod tests {
 
         assert!(matches!(result, Err(MovementError::InvalidAmount)));
     }
+    #[test]
+    fn preserves_budget_id() {
+        let budget_id = BudgetId::new();
+        let movement = Movement::new(
+            budget_id.clone(),
+            FinanceAccountId::new(),
+            MovementType::Credit,
+            Money::new(100, Currency::brl()),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(movement.budget_id, budget_id);
+    }
 
     #[test]
     fn preserves_account_id() {
         let account_id = FinanceAccountId::new();
         let movement = Movement::new(
+            BudgetId::new(),
             account_id.clone(),
             MovementType::Credit,
             Money::new(100, Currency::brl()),
@@ -159,6 +184,7 @@ mod tests {
     fn preserves_currency() {
         let currency = Currency::eur();
         let movement = Movement::new(
+            BudgetId::new(),
             FinanceAccountId::new(),
             MovementType::Credit,
             Money::new(100, currency.clone()),
