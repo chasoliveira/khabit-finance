@@ -24,7 +24,7 @@ pub enum MovementType {
     Debit,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Movement {
     id: MovementId,
     budget_id: BudgetId,
