@@ -91,6 +91,22 @@ mod tests {
             }
         }
 
+        fn existing_by_id(&self, id: &AccountId) -> Result<bool, AccountRepositoryError> {
+            if self.with_error {
+                return Err(AccountRepositoryError::ReadFailed);
+            }
+            match &self.account {
+                Some(acc) => {
+                    if acc.id() == id {
+                        Ok(true)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                None => Ok(false),
+            }
+        }
+
         fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
             match &self.account {
                 Some(acc) => {

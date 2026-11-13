@@ -81,6 +81,10 @@ impl Budget {
         Ok(())
     }
 
+    pub fn get_money(&self, amount_int_cents: i64) -> Money {
+        Money::new(amount_int_cents, self.currency().clone())
+    }
+
     pub fn create_movement(
         &mut self,
         account_id: AccountId,
@@ -133,6 +137,15 @@ mod tests {
 
         assert_eq!(budget.archive(), ());
         assert_eq!(budget.is_archived(), true);
+    }
+
+    #[test]
+    fn get_money() {
+        let budget = Budget::new("Monthly expenses".to_string(), Currency::brl());
+
+        let money = budget.get_money(123);
+        assert_eq!(money.amount_in_cents(), 123);
+        assert_eq!(budget.currency(), money.currency());
     }
 
     #[test]

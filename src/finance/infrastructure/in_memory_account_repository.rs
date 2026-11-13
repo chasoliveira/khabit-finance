@@ -30,6 +30,11 @@ impl AccountRepository for InMemoryAccountRepository {
             .find(|account| account.id() == id)
             .cloned())
     }
+
+    fn existing_by_id(&self, id: &AccountId) -> Result<bool, AccountRepositoryError> {
+        Ok(self.accounts.iter().any(|account| account.id() == id))
+    }
+
     fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
         if let Some(pos) = self
             .accounts
@@ -100,6 +105,28 @@ mod tests {
         let repository = InMemoryAccountRepository::new();
         let account = repository.find_by_id(&AccountId::new()).unwrap();
         assert!(account.is_none());
+    }
+
+    #[test]
+    fn test_existing_by_id() {
+        let mut repository = InMemoryAccountRepository::new();
+        let new_account = Account::new(
+            "Test Account".to_string(),
+            AccountType::Checking,
+            Currency::brl(),
+        );
+        let id = new_account.id().clone();
+
+        repository.add(new_account);
+        let account = repository.existing_by_id(&id).unwrap();
+        assert!(account);
+    }
+
+    #[test]
+    fn test_existing_by_id_returns_none() {
+        let repository = InMemoryAccountRepository::new();
+        let account = repository.existing_by_id(&AccountId::new()).unwrap();
+        assert!(!account);
     }
 
     #[test]
