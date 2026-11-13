@@ -75,13 +75,17 @@ where
     R: BudgetRepository,
     RA: AccountRepository,
 {
-    let Some(_) = account_repo.find_by_id(account_id)? else {
+    let Some(account) = account_repo.find_by_id(account_id)? else {
         return Err(BudgetMovementError::AccountNotFound);
     };
 
     let Some(mut budget) = repository.find_by_id(&budget_id)? else {
         return Err(BudgetMovementError::BudgetNotFound);
     };
+
+    if !account.matches_currency(budget.currency()) {
+        return Err(BudgetMovementError::CurrencyMismatch);
+    }
 
     let amount_money = budget.get_money(amount_in_cents);
     let result = budget.create_movement(account_id, movement_type, amount_money, description)?;
@@ -98,14 +102,17 @@ mod tests {
     use crate::finance::{
         application::{
             account_repository_trait::AccountRepositoryError,
-            budget_repository_trait::BudgetRepository,
+            budget_repository_trait::{BudgetRepository, BudgetRepositoryError},
             create_movement_in_budget::{BudgetMovementError, create_movement_in_budget},
             test_support::{
-                fake_account_repository::{FakeAccountRepository, new_account_brl},
+                fake_account_repository::{FakeAccountRepository, new_account, new_account_brl},
                 fake_budget_repository::{FakeBudgetRepository, new_budget_brl},
             },
         },
-        domain::{account::AccountId, movement::MovementType},
+        domain::{
+            account::AccountId, budget::BudgetId, movement::MovementType,
+            shared::currency::Currency,
+        },
     };
 
     #[test]
@@ -139,6 +146,26 @@ mod tests {
     }
 
     #[test]
+    fn test_create_movement_error_when_account_not_found() {
+        let account_repo = FakeAccountRepository::new(None);
+        let budget = new_budget_brl();
+        let budget_id = budget.id().clone();
+        let mut repo = FakeBudgetRepository::new(Some(budget));
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &budget_id,
+            &AccountId::new(),
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::AccountNotFound));
+    }
+
+    #[test]
     fn test_create_movement_error_when_account_has_error() {
         let account = new_account_brl();
         let account_repo = FakeAccountRepository::with_read_error(
@@ -161,5 +188,120 @@ mod tests {
         );
 
         assert_eq!(result, Err(BudgetMovementError::RepositoryFailure));
+    }
+
+    #[test]
+    fn test_create_movement_error_when_budget_not_found() {
+        let account = new_account_brl();
+        let account_id = account.id().clone();
+        let account_repo = FakeAccountRepository::new(Some(account));
+        let mut repo = FakeBudgetRepository::new(None);
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &BudgetId::new(),
+            &account_id,
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::BudgetNotFound));
+    }
+
+    #[test]
+    fn test_create_movement_error_when_budget_read_fails() {
+        let account = new_account_brl();
+        let account_id = account.id().clone();
+        let account_repo = FakeAccountRepository::new(Some(account));
+        let budget = new_budget_brl();
+        let budget_id = budget.id().clone();
+        let mut repo = FakeBudgetRepository::with_read_error(
+            Some(budget),
+            Some(BudgetRepositoryError::ReadFailed),
+        );
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &budget_id,
+            &account_id,
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::RepositoryFailure));
+    }
+
+    #[test]
+    fn test_create_movement_error_when_budget_update_fails() {
+        let account = new_account_brl();
+        let account_id = account.id().clone();
+        let account_repo = FakeAccountRepository::new(Some(account));
+        let budget = new_budget_brl();
+        let budget_id = budget.id().clone();
+        let mut repo = FakeBudgetRepository::with_update_error(
+            Some(budget),
+            Some(BudgetRepositoryError::UpdateFailed),
+        );
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &budget_id,
+            &account_id,
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::RepositoryFailure));
+    }
+
+    #[test]
+    fn test_create_movement_error_when_budget_is_archived() {
+        let account = new_account_brl();
+        let account_id = account.id().clone();
+        let account_repo = FakeAccountRepository::new(Some(account));
+        let mut budget = new_budget_brl();
+        budget.archive();
+        let budget_id = budget.id().clone();
+        let mut repo = FakeBudgetRepository::new(Some(budget));
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &budget_id,
+            &account_id,
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::BudgetArchived));
+    }
+
+    #[test]
+    fn test_create_movement_error_when_account_mismatch_currency() {
+        let account = new_account(Currency::can());
+        let account_id = account.id().clone();
+        let account_repo = FakeAccountRepository::new(Some(account));
+        let budget = new_budget_brl();
+        let budget_id = budget.id().clone();
+        let mut repo = FakeBudgetRepository::new(Some(budget));
+
+        let result = create_movement_in_budget(
+            &mut repo,
+            &account_repo,
+            &budget_id,
+            &account_id,
+            12345,
+            MovementType::Credit,
+            Some("Movement".to_string()),
+        );
+
+        assert_eq!(result, Err(BudgetMovementError::CurrencyMismatch));
     }
 }

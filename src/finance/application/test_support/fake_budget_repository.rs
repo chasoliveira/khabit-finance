@@ -23,6 +23,28 @@ impl FakeBudgetRepository {
             update_error: None,
         }
     }
+
+    pub fn with_read_error(
+        budget: Option<Budget>,
+        read_error: Option<BudgetRepositoryError>,
+    ) -> Self {
+        FakeBudgetRepository {
+            budget,
+            read_error,
+            update_error: None,
+        }
+    }
+
+    pub fn with_update_error(
+        budget: Option<Budget>,
+        update_error: Option<BudgetRepositoryError>,
+    ) -> Self {
+        FakeBudgetRepository {
+            budget,
+            read_error: None,
+            update_error,
+        }
+    }
 }
 
 impl BudgetRepository for FakeBudgetRepository {

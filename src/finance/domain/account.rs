@@ -101,6 +101,10 @@ impl Account {
         self.is_archived = true;
     }
 
+    pub fn matches_currency(&self, currency: &Currency) -> bool {
+        self.balance().currency() == currency
+    }
+
     pub fn deposit(&mut self, amount: &Money) -> Result<(), AccountError> {
         self.ensure_active()?;
         self.validate_amount(&amount)?;
@@ -145,35 +149,28 @@ impl Account {
 
 #[cfg(test)]
 mod tests {
-
-    use uuid::Version;
-
     use super::*;
+    use crate::finance::application::test_support::fake_account_repository::new_account_brl;
+    use uuid::Version;
 
     #[test]
     fn test_finance_account_type() {
         for account_type in [AccountType::Cash, AccountType::Checking] {
-            println!("Testing expandable account type: {:?}", account_type);
             assert!(account_type.is_spendable());
         }
 
         for account_type in [AccountType::Savings, AccountType::Investment] {
-            println!("Testing non-expandable account type: {:?}", account_type);
             assert!(!account_type.is_spendable());
         }
     }
 
     #[test]
     fn test_account_creation() {
-        let account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let account = new_account_brl();
 
         assert_eq!(account.id().0.value().get_version(), Some(Version::Random));
-        assert_eq!(account.name(), "My Checking Account");
-        assert_eq!(account.account_type, AccountType::Checking);
+        assert_eq!(account.name(), "Generic");
+        assert_eq!(account.account_type, AccountType::Cash);
         assert_eq!(account.institution_name.as_deref(), None);
         assert_eq!(account.description.as_deref(), None);
         assert_eq!(account.balance.amount_in_cents(), 0);
@@ -182,11 +179,7 @@ mod tests {
 
     #[test]
     fn test_account_deposit() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
 
         let result = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result.is_ok());
@@ -195,11 +188,7 @@ mod tests {
 
     #[test]
     fn test_account_archived_deposit() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         account.archive();
 
         let result = account.deposit(&Money::new(1000, Currency::brl()));
@@ -212,11 +201,7 @@ mod tests {
 
     #[test]
     fn test_account_archived_deposit_invalid() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         account.archive();
 
         let result = account.deposit(&Money::new(-1000, Currency::brl()));
@@ -229,11 +214,7 @@ mod tests {
 
     #[test]
     fn test_account_deposit_negative() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result = account.deposit(&Money::new(-1000, Currency::brl()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AccountError::InvalidAmount);
@@ -244,11 +225,7 @@ mod tests {
 
     #[test]
     fn test_account_deposit_invalid_currency() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result = account.deposit(&Money::new(800, Currency::usa()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AccountError::CurrencyMismatch);
@@ -258,11 +235,7 @@ mod tests {
 
     #[test]
     fn test_account_deposit_zero() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
 
         let result = account.deposit(&Money::new(0, Currency::brl()));
         assert!(result.is_err());
@@ -274,11 +247,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
@@ -289,11 +258,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_archived() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         account.archive();
 
         let result = account.withdraw(&Money::new(500, Currency::brl()));
@@ -305,11 +270,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_archived_negative() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         account.archive();
 
         let result = account.withdraw(&Money::new(-500, Currency::brl()));
@@ -321,11 +282,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_insufficient_funds() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
         let result = account.withdraw(&Money::new(1500, Currency::brl()));
@@ -336,11 +293,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_negative() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
@@ -352,11 +305,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_invalid_currency() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result = account.withdraw(&Money::new(800, Currency::usa()));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AccountError::CurrencyMismatch);
@@ -366,11 +315,7 @@ mod tests {
 
     #[test]
     fn test_account_withdraw_zero() {
-        let mut account = Account::new(
-            "My Checking Account".to_string(),
-            AccountType::Checking,
-            Currency::brl(),
-        );
+        let mut account = new_account_brl();
         let result_deposit = account.deposit(&Money::new(1000, Currency::brl()));
         assert!(result_deposit.is_ok());
 
@@ -378,5 +323,13 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AccountError::InvalidAmount);
         assert_eq!(account.balance.amount_in_cents(), 1000);
+    }
+
+    #[test]
+    fn test_account_matches_currency() {
+        let account = new_account_brl();
+
+        assert!(account.matches_currency(&Currency::brl()));
+        assert!(!account.matches_currency(&Currency::usa()));
     }
 }

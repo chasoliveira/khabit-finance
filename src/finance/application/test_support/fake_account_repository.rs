@@ -12,6 +12,9 @@ use crate::{
 pub fn new_account_brl() -> Account {
     Account::new("Generic".to_string(), AccountType::Cash, Currency::brl())
 }
+pub fn new_account(currency: Currency) -> Account {
+    Account::new("Generic".to_string(), AccountType::Cash, currency)
+}
 pub struct FakeAccountRepository {
     account: Option<Account>,
     read_error: Option<AccountRepositoryError>,
