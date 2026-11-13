@@ -1,7 +1,7 @@
 use crate::finance::{
     application::budget_repository_trait::{BudgetRepository, BudgetRepositoryError},
     domain::{
-        budget::{Budget, BudgetId},
+        budgets::budget::{Budget, BudgetId},
         shared::currency::Currency,
     },
 };

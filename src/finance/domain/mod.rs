@@ -1,4 +1,5 @@
 pub mod account;
-pub mod budget;
+pub mod budgets;
+pub mod events;
 pub mod movement;
 pub mod shared;

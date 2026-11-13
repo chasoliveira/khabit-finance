@@ -1,4 +1,4 @@
-use crate::finance::domain::budget::{Budget, BudgetId};
+use crate::finance::domain::budgets::budget::{Budget, BudgetId};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BudgetRepositoryError {

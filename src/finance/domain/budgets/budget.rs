@@ -1,5 +1,7 @@
 use crate::finance::domain::{
     account::AccountId,
+    budgets::movement_created::MovementCreatedDomainEvent,
+    events::domain_events::DomainEvent,
     movement::{Movement, MovementError, MovementId, MovementType},
     shared::{currency::Currency, id::Id, money::Money},
 };
@@ -35,6 +37,7 @@ pub struct Budget {
     currency: Currency,
     is_archived: bool,
     movements: Vec<Movement>,
+    domain_events: Vec<Box<dyn DomainEvent>>,
 }
 
 impl Budget {
@@ -45,6 +48,7 @@ impl Budget {
             currency,
             is_archived: false,
             movements: Vec::new(),
+            domain_events: Vec::new(),
         }
     }
 
@@ -66,9 +70,19 @@ impl Budget {
     pub fn movements(&self) -> &[Movement] {
         &self.movements
     }
+    pub fn domain_events(&self) -> &[Box<dyn DomainEvent>] {
+        &self.domain_events
+    }
 
     pub fn archive(&mut self) {
         self.is_archived = true;
+    }
+
+    fn raise_domain_event<E>(&mut self, event: E)
+    where
+        E: DomainEvent + 'static,
+    {
+        self.domain_events.push(Box::new(event));
     }
 
     fn validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
@@ -101,8 +115,13 @@ impl Budget {
             amount,
             description,
         )?;
+
         let movement_id = movement.id().clone();
         self.movements.push(movement);
+        self.raise_domain_event(MovementCreatedDomainEvent::new(
+            self.id().clone(),
+            movement_id.clone(),
+        ));
         Ok(movement_id)
     }
 }
@@ -172,6 +191,8 @@ mod tests {
         assert_eq!(mov.movement_type(), &movement_type);
         assert_eq!(mov.amount(), &Money::new(100, Currency::usa()));
         assert_eq!(mov.description(), decription);
+
+        assert_eq!(budget.domain_events().len(), 1);
     }
 
     #[test]

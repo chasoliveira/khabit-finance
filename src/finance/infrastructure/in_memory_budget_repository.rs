@@ -1,6 +1,6 @@
 use crate::finance::{
     application::budget_repository_trait::{BudgetRepository, BudgetRepositoryError},
-    domain::budget::{Budget, BudgetId},
+    domain::budgets::budget::{Budget, BudgetId},
 };
 
 pub struct InMemoryBudgetRepository {

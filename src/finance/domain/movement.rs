@@ -1,6 +1,6 @@
 use crate::finance::domain::{
     account::AccountId,
-    budget::BudgetId,
+    budgets::budget::BudgetId,
     shared::{id::Id, money::Money},
 };
 
@@ -84,7 +84,7 @@ mod tests {
 
     use crate::finance::domain::{
         account::AccountId,
-        budget::BudgetId,
+        budgets::budget::BudgetId,
         movement::{Movement, MovementError, MovementType},
         shared::{currency::Currency, money::Money},
     };
