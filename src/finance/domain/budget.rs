@@ -28,6 +28,7 @@ impl BudgetId {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Budget {
     id: BudgetId,
     name: String,
