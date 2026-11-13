@@ -55,7 +55,7 @@ impl AccountRepository for FakeAccountRepository {
         }
         match &self.account {
             Some(acc) => {
-                if acc.id() == id && !acc.is_archived() {
+                if acc.id() == id {
                     Ok(self.account.clone())
                 } else {
                     Ok(None)
@@ -65,29 +65,13 @@ impl AccountRepository for FakeAccountRepository {
         }
     }
 
-    fn exists_by_id(&self, id: &AccountId) -> Result<bool, AccountRepositoryError> {
-        if self.read_error.is_some() {
-            return Err(self.read_error.clone().unwrap());
-        }
-        match &self.account {
-            Some(acc) => {
-                if acc.id() == id && !acc.is_archived() {
-                    Ok(true)
-                } else {
-                    Ok(false)
-                }
-            }
-            None => Ok(false),
-        }
-    }
-
     fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
         if self.update_error.is_some() {
             return Err(self.update_error.clone().unwrap());
         }
         match &self.account {
             Some(acc) => {
-                if acc.id() == account.id() && !account.is_archived() {
+                if acc.id() == account.id() {
                     self.account = Some(account);
                     Ok(())
                 } else {

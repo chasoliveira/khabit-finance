@@ -32,7 +32,7 @@ impl BudgetRepository for FakeBudgetRepository {
         }
         match &self.budget {
             Some(bgt) => {
-                if bgt.id() == id && !bgt.is_archived() {
+                if bgt.id() == id {
                     Ok(self.budget.clone())
                 } else {
                     Ok(None)
@@ -48,7 +48,7 @@ impl BudgetRepository for FakeBudgetRepository {
         }
         match &self.budget {
             Some(bgt) => {
-                if bgt.id() == budget.id() && !bgt.is_archived() {
+                if bgt.id() == budget.id() {
                     self.budget = Some(budget);
                     Ok(())
                 } else {

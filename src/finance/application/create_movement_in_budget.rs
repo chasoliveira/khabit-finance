@@ -75,7 +75,9 @@ where
     R: BudgetRepository,
     RA: AccountRepository,
 {
-    let _ = account_repo.exists_by_id(&account_id)?;
+    let Some(_) = account_repo.find_by_id(account_id)? else {
+        return Err(BudgetMovementError::AccountNotFound);
+    };
 
     let Some(mut budget) = repository.find_by_id(&budget_id)? else {
         return Err(BudgetMovementError::BudgetNotFound);

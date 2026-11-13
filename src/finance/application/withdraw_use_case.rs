@@ -117,7 +117,7 @@ mod tests {
         let mut repository = FakeAccountRepository::new(Some(account));
 
         let result = withdraw_from_account(&mut repository, &id, Money::new(500, Currency::brl()));
-        assert_eq!(result, Err(WithdrawError::AccountNotFound));
+        assert_eq!(result, Err(WithdrawError::AccountArchived));
     }
 
     #[test]
