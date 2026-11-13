@@ -87,7 +87,7 @@ impl Budget {
 
     pub fn create_movement(
         &mut self,
-        account_id: AccountId,
+        account_id: &AccountId,
         movement_type: MovementType,
         amount: Money,
         description: Option<String>,
@@ -96,7 +96,7 @@ impl Budget {
 
         let movement = Movement::new(
             self.id().clone(),
-            account_id,
+            account_id.clone(),
             movement_type,
             amount,
             description,
@@ -156,7 +156,7 @@ mod tests {
         let amount = Money::new(100, Currency::usa());
         let decription = Some("text".to_string());
         let result = budget.create_movement(
-            account_id.clone(),
+            &account_id,
             movement_type.clone(),
             amount.clone(),
             decription.clone(),
@@ -181,7 +181,7 @@ mod tests {
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::brl());
         let decription = Some("text".to_string());
-        let result = budget.create_movement(account_id, movement_type, amount, decription);
+        let result = budget.create_movement(&account_id, movement_type, amount, decription);
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), BudgetError::CurrencyMismatch);
@@ -198,7 +198,7 @@ mod tests {
 
         budget.archive();
 
-        let result = budget.create_movement(account_id, movement_type, amount, decription);
+        let result = budget.create_movement(&account_id, movement_type, amount, decription);
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), BudgetError::Archived);
@@ -211,7 +211,7 @@ mod tests {
 
         {
             let result = budget.create_movement(
-                AccountId::new(),
+                &AccountId::new(),
                 MovementType::Credit,
                 Money::new(0, Currency::usa()),
                 Some("text".to_string()),
@@ -224,7 +224,7 @@ mod tests {
 
         {
             let result = budget.create_movement(
-                AccountId::new(),
+                &AccountId::new(),
                 MovementType::Credit,
                 Money::new(-10, Currency::usa()),
                 Some("text".to_string()),

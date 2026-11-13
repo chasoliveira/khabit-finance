@@ -1,6 +1,6 @@
 use crate::finance::domain::budget::{Budget, BudgetId};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BudgetRepositoryError {
     ReadFailed,
     UpdateFailed,

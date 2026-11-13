@@ -27,19 +27,22 @@ impl AccountRepository for InMemoryAccountRepository {
         Ok(self
             .accounts
             .iter()
-            .find(|account| account.id() == id)
+            .find(|account| account.id() == id && !account.is_archived())
             .cloned())
     }
 
-    fn existing_by_id(&self, id: &AccountId) -> Result<bool, AccountRepositoryError> {
-        Ok(self.accounts.iter().any(|account| account.id() == id))
+    fn exists_by_id(&self, id: &AccountId) -> Result<bool, AccountRepositoryError> {
+        Ok(self
+            .accounts
+            .iter()
+            .any(|account| account.id() == id && !account.is_archived()))
     }
 
     fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
         if let Some(pos) = self
             .accounts
             .iter()
-            .position(|acc| acc.id() == account.id())
+            .position(|acc| acc.id() == account.id() && !account.is_archived())
         {
             self.accounts[pos] = account;
             Ok(())
@@ -118,14 +121,14 @@ mod tests {
         let id = new_account.id().clone();
 
         repository.add(new_account);
-        let account = repository.existing_by_id(&id).unwrap();
+        let account = repository.exists_by_id(&id).unwrap();
         assert!(account);
     }
 
     #[test]
     fn test_existing_by_id_returns_none() {
         let repository = InMemoryAccountRepository::new();
-        let account = repository.existing_by_id(&AccountId::new()).unwrap();
+        let account = repository.exists_by_id(&AccountId::new()).unwrap();
         assert!(!account);
     }
 

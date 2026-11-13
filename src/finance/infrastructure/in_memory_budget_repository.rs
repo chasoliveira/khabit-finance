@@ -27,12 +27,16 @@ impl BudgetRepository for InMemoryBudgetRepository {
         Ok(self
             .budgets
             .iter()
-            .find(|budget| budget.id() == id)
+            .find(|budget| budget.id() == id && !budget.is_archived())
             .cloned())
     }
 
     fn update(&mut self, budget: Budget) -> Result<(), BudgetRepositoryError> {
-        if let Some(pos) = self.budgets.iter().position(|bgt| bgt.id() == budget.id()) {
+        if let Some(pos) = self
+            .budgets
+            .iter()
+            .position(|bgt| bgt.id() == budget.id() && !bgt.is_archived())
+        {
             self.budgets[pos] = budget;
             Ok(())
         } else {
@@ -83,7 +87,7 @@ mod tests {
 
         let new_item_id = new_item.id().clone();
         let result_added_movment = new_item.create_movement(
-            AccountId::new(),
+            &AccountId::new(),
             MovementType::Debit,
             Money::new(123, Currency::brl()),
             Some("Bought a Coffe".to_string()),
