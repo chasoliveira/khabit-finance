@@ -1,4 +1,4 @@
-use crate::finance::domain::account::{FinanceAccount, FinanceAccountId};
+use crate::finance::domain::account::{Account, AccountId};
 
 #[derive(Debug, PartialEq)]
 pub enum AccountRepositoryError {
@@ -7,9 +7,6 @@ pub enum AccountRepositoryError {
 }
 
 pub trait AccountRepository {
-    fn find_by_id(
-        &self,
-        id: &FinanceAccountId,
-    ) -> Result<Option<FinanceAccount>, AccountRepositoryError>;
-    fn update(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError>;
+    fn find_by_id(&self, id: &AccountId) -> Result<Option<Account>, AccountRepositoryError>;
+    fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError>;
 }

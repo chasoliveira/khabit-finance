@@ -1,5 +1,5 @@
 use crate::finance::domain::{
-    account::FinanceAccountId,
+    account::AccountId,
     movement::{Movement, MovementError, MovementId, MovementType},
     shared::{currency::Currency, id::Id, money::Money},
 };
@@ -70,25 +70,24 @@ impl Budget {
         self.is_archived = true;
     }
 
-    fn _validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
-        if self.currency() != amount.currency() {
-            return Err(BudgetError::CurrencyMismatch);
-        }
+    fn validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
         if self.is_archived() {
             return Err(BudgetError::Archived);
         }
-
+        if self.currency() != amount.currency() {
+            return Err(BudgetError::CurrencyMismatch);
+        }
         Ok(())
     }
 
     pub fn create_movement(
         &mut self,
-        account_id: FinanceAccountId,
+        account_id: AccountId,
         movement_type: MovementType,
         amount: Money,
         description: Option<String>,
     ) -> Result<MovementId, BudgetError> {
-        self._validate_movement_creation(&amount)?;
+        self.validate_movement_creation(&amount)?;
 
         let movement = Movement::new(
             self.id().clone(),
@@ -138,20 +137,33 @@ mod tests {
     #[test]
     fn create_movement_success() {
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
-        let account_id = FinanceAccountId::new();
+        let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::usa());
         let decription = Some("text".to_string());
-        let result = budget.create_movement(account_id, movement_type, amount, decription);
+        let result = budget.create_movement(
+            account_id.clone(),
+            movement_type.clone(),
+            amount.clone(),
+            decription.clone(),
+        );
 
         assert!(result.is_ok());
-        assert_eq!(budget.movements().len(), 1)
+        assert_eq!(budget.movements().len(), 1);
+
+        let mov = budget.movements().get(0).unwrap();
+        assert_eq!(mov.id(), &result.unwrap());
+        assert_eq!(mov.budget_id(), budget.id());
+        assert_eq!(mov.account_id(), &account_id);
+        assert_eq!(mov.movement_type(), &movement_type);
+        assert_eq!(mov.amount(), &Money::new(100, Currency::usa()));
+        assert_eq!(mov.description(), decription);
     }
 
     #[test]
     fn create_movement_returns_error_for_currency_mismatch() {
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
-        let account_id = FinanceAccountId::new();
+        let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::brl());
         let decription = Some("text".to_string());
@@ -165,7 +177,7 @@ mod tests {
     #[test]
     fn create_movement_returns_error_when_archived() {
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
-        let account_id = FinanceAccountId::new();
+        let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::usa());
         let decription = Some("text".to_string());
@@ -185,7 +197,7 @@ mod tests {
 
         {
             let result = budget.create_movement(
-                FinanceAccountId::new(),
+                AccountId::new(),
                 MovementType::Credit,
                 Money::new(0, Currency::usa()),
                 Some("text".to_string()),
@@ -198,7 +210,7 @@ mod tests {
 
         {
             let result = budget.create_movement(
-                FinanceAccountId::new(),
+                AccountId::new(),
                 MovementType::Credit,
                 Money::new(-10, Currency::usa()),
                 Some("text".to_string()),

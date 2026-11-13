@@ -1,9 +1,7 @@
 pub mod finance;
 
 pub use finance::application::withdraw_use_case::withdraw_from_account;
-pub use finance::domain::account::FinanceAccount;
-pub use finance::domain::account::FinanceAccountError;
-pub use finance::domain::account::FinanceAccountType;
+pub use finance::domain::account::{AccountError, AccountType};
 
 #[cfg(test)]
 mod tests {
@@ -11,7 +9,7 @@ mod tests {
     use crate::finance::{
         application::account_repository_trait::AccountRepository,
         domain::{
-            account::FinanceAccount,
+            account::Account,
             shared::{currency::Currency, money::Money},
         },
         infrastructure::in_memory_account_repository::InMemoryAccountRepository,
@@ -19,9 +17,9 @@ mod tests {
 
     #[test]
     fn test_withdraw_from_account() {
-        let mut account = FinanceAccount::new(
+        let mut account = Account::new(
             "My Checking Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
         let id = account.id().clone();

@@ -1,13 +1,13 @@
 use crate::finance::application::account_repository_trait::{
     AccountRepository, AccountRepositoryError,
 };
-use crate::finance::domain::account::{FinanceAccount, FinanceAccountId};
+use crate::finance::domain::account::{Account, AccountId};
 
 pub struct InMemoryAccountRepository {
     // This is a placeholder for the in-memory storage of accounts.
     // In a real implementation, you might use a HashMap or another data structure.
     // For simplicity, we'll just use a vector here.
-    accounts: Vec<FinanceAccount>,
+    accounts: Vec<Account>,
 }
 
 impl InMemoryAccountRepository {
@@ -17,23 +17,20 @@ impl InMemoryAccountRepository {
         }
     }
 
-    pub fn add(&mut self, account: FinanceAccount) {
+    pub fn add(&mut self, account: Account) {
         self.accounts.push(account);
     }
 }
 
 impl AccountRepository for InMemoryAccountRepository {
-    fn find_by_id(
-        &self,
-        id: &FinanceAccountId,
-    ) -> Result<Option<FinanceAccount>, AccountRepositoryError> {
+    fn find_by_id(&self, id: &AccountId) -> Result<Option<Account>, AccountRepositoryError> {
         Ok(self
             .accounts
             .iter()
             .find(|account| account.id() == id)
             .cloned())
     }
-    fn update(&mut self, account: FinanceAccount) -> Result<(), AccountRepositoryError> {
+    fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
         if let Some(pos) = self
             .accounts
             .iter()
@@ -51,15 +48,15 @@ impl AccountRepository for InMemoryAccountRepository {
 mod tests {
     use super::*;
     use crate::finance::application::account_repository_trait::AccountRepository;
+    use crate::finance::domain::account::{Account, AccountType};
     use crate::finance::domain::shared::currency::Currency;
-    use crate::{FinanceAccount, FinanceAccountType};
 
     #[test]
     fn test_add_account() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account = FinanceAccount::new(
+        let new_account = Account::new(
             "Test Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
 
@@ -70,9 +67,9 @@ mod tests {
     #[test]
     fn test_find_by_id() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account = FinanceAccount::new(
+        let new_account = Account::new(
             "Test Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
         let id = new_account.id().clone();
@@ -85,9 +82,9 @@ mod tests {
     #[test]
     fn test_find_by_id_returns_some() {
         let mut repository = InMemoryAccountRepository::new();
-        let new_account = FinanceAccount::new(
+        let new_account = Account::new(
             "Test Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
         let id = new_account.id().clone();
@@ -101,16 +98,16 @@ mod tests {
     #[test]
     fn test_find_by_id_returns_none() {
         let repository = InMemoryAccountRepository::new();
-        let account = repository.find_by_id(&FinanceAccountId::new()).unwrap();
+        let account = repository.find_by_id(&AccountId::new()).unwrap();
         assert!(account.is_none());
     }
 
     #[test]
     fn test_update_ok() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new(
+        let account = Account::new(
             "Test Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
         repository.add(account.clone());
@@ -122,9 +119,9 @@ mod tests {
     #[test]
     fn test_update_error() {
         let mut repository = InMemoryAccountRepository::new();
-        let account = FinanceAccount::new(
+        let account = Account::new(
             "Test Account".to_string(),
-            FinanceAccountType::Checking,
+            AccountType::Checking,
             Currency::brl(),
         );
         let result = repository.update(account);
