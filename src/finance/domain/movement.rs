@@ -1,6 +1,7 @@
 use crate::finance::domain::{
     account::AccountId,
-    budgets::budget::BudgetId,
+    budgets::{budget::BudgetId, movement_created::MovementCreatedDomainEvent},
+    events::domain_events::{DomainEvent, DomainEvents},
     shared::{id::Id, money::Money},
 };
 
@@ -32,6 +33,7 @@ pub struct Movement {
     movement_type: MovementType,
     amount: Money,
     description: Option<String>,
+    domain_events: DomainEvents,
 }
 
 impl Movement {
@@ -45,14 +47,21 @@ impl Movement {
         if amount.is_non_positive() {
             return Err(MovementError::InvalidAmount);
         }
-        Ok(Movement {
-            id: MovementId(Id::new()),
-            budget_id,
+        let movement_id = MovementId::new();
+        let mut movement = Movement {
+            id: movement_id.clone(),
+            budget_id: budget_id.clone(),
             account_id,
             movement_type,
             amount,
             description,
-        })
+            domain_events: DomainEvents::new(),
+        };
+
+        movement.domain_events.raise(
+            MovementCreatedDomainEvent::new(budget_id.clone(), movement_id.clone()).in_box(),
+        );
+        Ok(movement)
     }
 
     pub fn id(&self) -> &MovementId {
@@ -75,6 +84,10 @@ impl Movement {
     }
     pub fn description(&self) -> Option<String> {
         self.description.clone()
+    }
+
+    pub fn domain_events(&self) -> &[Box<dyn DomainEvent>] {
+        self.domain_events.events()
     }
 }
 
@@ -104,6 +117,11 @@ mod tests {
         assert_eq!(movement.description(), Some("Adding amount".to_string()));
         assert_eq!(movement.movement_type, MovementType::Credit);
         assert_eq!(movement.amount(), &Money::new(100, Currency::brl()));
+        assert_eq!(movement.domain_events().len(), 1);
+        assert_eq!(
+            movement.domain_events()[0].event_name(),
+            "MovementCreatedDomainEvent"
+        );
     }
 
     #[test]

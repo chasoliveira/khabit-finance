@@ -15,6 +15,10 @@ impl MovementCreatedDomainEvent {
             movement_id,
         }
     }
+
+    pub(in super::super) fn in_box(&self) -> Box<dyn DomainEvent> {
+        Box::new(self.clone())
+    }
 }
 
 impl DomainEvent for MovementCreatedDomainEvent {
