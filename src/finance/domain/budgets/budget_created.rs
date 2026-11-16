@@ -1,6 +1,8 @@
+use serde::Serialize;
+
 use crate::finance::domain::{budgets::budget::BudgetId, events::domain_events::DomainEvent};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BudgetCreatedDomainEvent {
     pub budget_id: BudgetId,
 }

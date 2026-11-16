@@ -1,10 +1,12 @@
+use serde::Serialize;
+
 use crate::finance::domain::shared::{
     currency::Currency,
     id::Id,
     money::{Money, MoneyError},
 };
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Serialize)]
 pub struct AccountId(Id);
 
 impl AccountId {

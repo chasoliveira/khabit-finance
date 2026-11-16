@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::finance::domain::{
     account::AccountId,
     budgets::budget_created::BudgetCreatedDomainEvent,
@@ -9,7 +11,7 @@ use crate::finance::domain::{
     shared::{currency::Currency, id::Id, money::Money},
 };
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Serialize)]
 pub struct BudgetId(Id);
 
 #[derive(Debug, PartialEq)]

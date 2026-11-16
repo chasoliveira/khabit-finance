@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::finance::domain::{
     account::AccountId,
     budgets::{budget::BudgetId, movements::movement_created::MovementCreatedDomainEvent},
@@ -8,7 +10,7 @@ use crate::finance::domain::{
     shared::{id::Id, money::Money},
 };
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Serialize)]
 pub struct MovementId(Id);
 
 impl MovementId {
