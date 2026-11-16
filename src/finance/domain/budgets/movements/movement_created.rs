@@ -26,4 +26,8 @@ impl DomainEvent for MovementCreatedDomainEvent {
     fn clone_box(&self) -> Box<dyn DomainEvent> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }

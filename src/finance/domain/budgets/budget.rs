@@ -147,7 +147,7 @@ impl Budget {
 mod tests {
     use uuid::Version;
 
-    use crate::finance::application::test_support::fake_domain_event_visitor::{
+    use crate::finance::application::test_support::domain_event_test_helper::{
         clear_all_events, collect_event_names,
     };
 
@@ -283,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn collect_domain_events_should_works_properly() {
+    fn collect_domain_events_should_work_properly() {
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
@@ -307,7 +307,7 @@ mod tests {
     }
 
     #[test]
-    fn clear_all_events_should_works_properly() {
+    fn clear_all_events_should_work_properly() {
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = AccountId::new();
         let movement_type = MovementType::Credit;

@@ -1,8 +1,14 @@
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Debug)]
 pub struct DomainEvents {
     events: Vec<Box<dyn DomainEvent>>,
+}
+
+pub trait DomainEvent: Debug + Send + Sync {
+    fn event_name(&self) -> &'static str;
+    fn clone_box(&self) -> Box<dyn DomainEvent>;
+    fn as_any(&self) -> &dyn Any;
 }
 
 impl DomainEvents {
@@ -23,11 +29,6 @@ impl DomainEvents {
     pub(in super::super) fn clear(&mut self) {
         self.events = Vec::new()
     }
-}
-
-pub trait DomainEvent: Debug + Send + Sync {
-    fn event_name(&self) -> &'static str;
-    fn clone_box(&self) -> Box<dyn DomainEvent>;
 }
 
 impl Clone for Box<dyn DomainEvent> {
@@ -52,6 +53,9 @@ mod tests {
 
         fn clone_box(&self) -> Box<dyn DomainEvent> {
             Box::new(self.clone())
+        }
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
         }
     }
 
