@@ -8,7 +8,7 @@ use crate::{
         domain::{
             account::AccountId,
             budgets::budget::{BudgetError, BudgetId},
-            movement::{MovementId, MovementType},
+            budgets::movements::movement::{MovementId, MovementType},
         },
     },
 };
@@ -110,8 +110,8 @@ mod tests {
             },
         },
         domain::{
-            account::AccountId, budgets::budget::BudgetId, movement::MovementType,
-            shared::currency::Currency,
+            account::AccountId, budgets::budget::BudgetId,
+            budgets::movements::movement::MovementType, shared::currency::Currency,
         },
     };
 

@@ -7,7 +7,7 @@ use crate::finance::{
 };
 
 pub fn new_budget_brl() -> Budget {
-    Budget::new("My Wallet".to_string(), Currency::brl())
+    Budget::new("My Wallet".to_string(), Currency::brl()).unwrap()
 }
 pub struct FakeBudgetRepository {
     budget: Option<Budget>,

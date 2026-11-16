@@ -10,13 +10,17 @@ impl DomainEvents {
         DomainEvents { events: Vec::new() }
     }
 
-    pub(in crate::finance::domain) fn raise(&mut self, event: Box<dyn DomainEvent>) {
-        self.events.push(event);
+    pub(in super::super) fn raise<E>(&mut self, event: E)
+    where
+        E: DomainEvent + 'static,
+    {
+        self.events.push(Box::new(event));
     }
-    pub fn events(&self) -> &[Box<dyn DomainEvent>] {
+
+    pub fn list(&self) -> &[Box<dyn DomainEvent>] {
         &self.events
     }
-    pub fn clear(&mut self) {
+    pub(in super::super) fn clear(&mut self) {
         self.events = Vec::new()
     }
 }
@@ -55,46 +59,46 @@ mod tests {
     fn creates_an_empty_event_collection() {
         let events = DomainEvents::new();
 
-        assert!(events.events().is_empty());
+        assert!(events.list().is_empty());
     }
 
     #[test]
     fn raises_and_exposes_events() {
         let mut events = DomainEvents::new();
 
-        events.raise(Box::new(TestEvent {
+        events.raise(TestEvent {
             name: "MovementCreated",
-        }));
+        });
 
-        assert_eq!(events.events().len(), 1);
-        assert_eq!(events.events()[0].event_name(), "MovementCreated");
+        assert_eq!(events.list().len(), 1);
+        assert_eq!(events.list()[0].event_name(), "MovementCreated");
     }
 
     #[test]
     fn clones_boxed_events() {
         let mut events = DomainEvents::new();
-        events.raise(Box::new(TestEvent {
+        events.raise(TestEvent {
             name: "MovementCreated",
-        }));
+        });
 
         let cloned_events = events.clone();
         events.clear();
 
-        assert!(events.events().is_empty());
-        assert_eq!(cloned_events.events().len(), 1);
-        assert_eq!(cloned_events.events()[0].event_name(), "MovementCreated");
+        assert!(events.list().is_empty());
+        assert_eq!(cloned_events.list().len(), 1);
+        assert_eq!(cloned_events.list()[0].event_name(), "MovementCreated");
     }
 
     #[test]
     fn clears_all_events() {
         let mut events = DomainEvents::new();
-        events.raise(Box::new(TestEvent { name: "FirstEvent" }));
-        events.raise(Box::new(TestEvent {
+        events.raise(TestEvent { name: "FirstEvent" });
+        events.raise(TestEvent {
             name: "SecondEvent",
-        }));
+        });
 
         events.clear();
 
-        assert!(events.events().is_empty());
+        assert!(events.list().is_empty());
     }
 }

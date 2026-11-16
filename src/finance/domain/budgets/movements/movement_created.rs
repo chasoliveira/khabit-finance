@@ -1,5 +1,6 @@
 use crate::finance::domain::{
-    budgets::budget::BudgetId, events::domain_events::DomainEvent, movement::MovementId,
+    budgets::{budget::BudgetId, movements::movement::MovementId},
+    events::domain_events::DomainEvent,
 };
 
 #[derive(Debug, Clone)]
@@ -14,10 +15,6 @@ impl MovementCreatedDomainEvent {
             budget_id,
             movement_id,
         }
-    }
-
-    pub(in super::super) fn in_box(&self) -> Box<dyn DomainEvent> {
-        Box::new(self.clone())
     }
 }
 

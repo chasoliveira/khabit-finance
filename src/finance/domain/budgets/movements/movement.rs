@@ -1,7 +1,10 @@
 use crate::finance::domain::{
     account::AccountId,
-    budgets::{budget::BudgetId, movement_created::MovementCreatedDomainEvent},
-    events::domain_events::{DomainEvent, DomainEvents},
+    budgets::{budget::BudgetId, movements::movement_created::MovementCreatedDomainEvent},
+    events::{
+        domain_event_source::DomainEventSource,
+        domain_events::{DomainEvent, DomainEvents},
+    },
     shared::{id::Id, money::Money},
 };
 
@@ -36,8 +39,17 @@ pub struct Movement {
     domain_events: DomainEvents,
 }
 
+impl DomainEventSource for Movement {
+    fn clear_domain_events(&mut self) {
+        self.domain_events.clear();
+    }
+    fn domain_events(&self) -> &[Box<dyn DomainEvent>] {
+        self.domain_events.list()
+    }
+}
+
 impl Movement {
-    pub(super) fn new(
+    pub(in super::super) fn new(
         budget_id: BudgetId,
         account_id: AccountId,
         movement_type: MovementType,
@@ -58,9 +70,12 @@ impl Movement {
             domain_events: DomainEvents::new(),
         };
 
-        movement.domain_events.raise(
-            MovementCreatedDomainEvent::new(budget_id.clone(), movement_id.clone()).in_box(),
-        );
+        movement
+            .domain_events
+            .raise(MovementCreatedDomainEvent::new(
+                budget_id.clone(),
+                movement_id.clone(),
+            ));
         Ok(movement)
     }
 
@@ -70,24 +85,17 @@ impl Movement {
     pub fn budget_id(&self) -> &BudgetId {
         &self.budget_id
     }
-
     pub fn account_id(&self) -> &AccountId {
         &self.account_id
     }
-
     pub fn movement_type(&self) -> &MovementType {
         &self.movement_type
     }
-
     pub fn amount(&self) -> &Money {
         &self.amount
     }
     pub fn description(&self) -> Option<String> {
         self.description.clone()
-    }
-
-    pub fn domain_events(&self) -> &[Box<dyn DomainEvent>] {
-        self.domain_events.events()
     }
 }
 
@@ -98,7 +106,8 @@ mod tests {
     use crate::finance::domain::{
         account::AccountId,
         budgets::budget::BudgetId,
-        movement::{Movement, MovementError, MovementType},
+        budgets::movements::movement::{Movement, MovementError, MovementType},
+        events::domain_event_source::DomainEventSource,
         shared::{currency::Currency, money::Money},
     };
 
