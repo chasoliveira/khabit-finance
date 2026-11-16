@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn test_add_budget() {
         let mut repository = InMemoryBudgetRepository::new();
-        let new_budget = Budget::new("My Wallet".to_string(), Currency::brl()).unwrap();
+        let new_budget = Budget::new("My Wallet".to_string(), Currency::brl());
         let new_budget_id = new_budget.id().clone();
 
         repository.add(new_budget);
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn test_update_ok() {
         let mut repository = InMemoryBudgetRepository::new();
-        let mut new_item = Budget::new("Test Budget".to_string(), Currency::brl()).unwrap();
+        let mut new_item = Budget::new("Test Budget".to_string(), Currency::brl());
         repository.add(new_item.clone());
 
         let new_item_id = new_item.id().clone();

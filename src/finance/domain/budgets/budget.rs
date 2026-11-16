@@ -53,7 +53,7 @@ impl DomainEventSource for Budget {
 }
 
 impl Budget {
-    pub fn new(name: String, currency: Currency) -> Result<Budget, BudgetError> {
+    pub fn new(name: String, currency: Currency) -> Budget {
         let mut budget = Budget {
             id: BudgetId(Id::new()),
             name,
@@ -67,7 +67,7 @@ impl Budget {
             .domain_events
             .raise(BudgetCreatedDomainEvent::new(budget.id().clone()));
 
-        Ok(budget)
+        budget
     }
 
     pub fn id(&self) -> &BudgetId {
@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn creates_budget_with_expected_values() {
-        let budget = Budget::new("Monthly expenses".to_string(), Currency::brl()).unwrap();
+        let budget = Budget::new("Monthly expenses".to_string(), Currency::brl());
 
         assert_eq!(budget.id().0.value().get_version(), Some(Version::Random));
         assert_eq!(budget.name(), "Monthly expenses");
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn archive_returns_ok_and_keeps_budget_archived() {
-        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa()).unwrap();
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
 
         assert_eq!(budget.archive(), ());
         assert_eq!(budget.is_archived(), true);
@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn get_money() {
-        let budget = Budget::new("Monthly expenses".to_string(), Currency::brl()).unwrap();
+        let budget = Budget::new("Monthly expenses".to_string(), Currency::brl());
 
         let money = budget.get_money(123);
         assert_eq!(money.amount_in_cents(), 123);
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn create_movement_success() {
-        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa()).unwrap();
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::usa());
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn create_movement_returns_error_for_currency_mismatch() {
-        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa()).unwrap();
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::brl());
@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn create_movement_returns_error_when_archived() {
-        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa()).unwrap();
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let account_id = AccountId::new();
         let movement_type = MovementType::Credit;
         let amount = Money::new(100, Currency::usa());
@@ -237,7 +237,7 @@ mod tests {
 
     #[test]
     fn create_movement_returns_error_when_amount_is_non_positive() {
-        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa()).unwrap();
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
 
         {
             let result = budget.create_movement(
