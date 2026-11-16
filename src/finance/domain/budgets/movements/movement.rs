@@ -46,6 +46,12 @@ impl DomainEventSource for Movement {
     fn domain_events(&self) -> &[Box<dyn DomainEvent>] {
         self.domain_events.list()
     }
+    fn visit_event_sources(&self, visitor: &mut dyn FnMut(&dyn DomainEventSource)) {
+        visitor(self);
+    }
+    fn visit_event_sources_mut(&mut self, visitor: &mut dyn FnMut(&mut dyn DomainEventSource)) {
+        visitor(self)
+    }
 }
 
 impl Movement {
