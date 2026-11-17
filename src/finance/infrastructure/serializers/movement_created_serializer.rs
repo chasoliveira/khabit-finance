@@ -11,7 +11,7 @@ use crate::finance::{
 pub struct MovementCreatedEventSerializer;
 
 impl DomainEventSerializer for MovementCreatedEventSerializer {
-    fn can_serializer(&self, event: &dyn DomainEvent) -> bool {
+    fn can_serialize(&self, event: &dyn DomainEvent) -> bool {
         event.as_any().is::<MovementCreatedDomainEvent>()
     }
     fn serialize(&self, event: &dyn DomainEvent) -> Result<String, DomainEventSerializerError> {
@@ -44,7 +44,7 @@ mod tests {
     };
 
     #[test]
-    fn serialize_budget_created_should_work_properly() {
+    fn serialize_movement_created_should_work_properly() {
         let serializer = MovementCreatedEventSerializer;
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         let movement = budget.create_movement(
@@ -59,7 +59,7 @@ mod tests {
 
         let movement_id = movement.unwrap();
         let event = budget.movements()[0].domain_events()[0].as_ref();
-        let result = serializer.can_serializer(event);
+        let result = serializer.can_serialize(event);
         assert!(result);
         let json = serializer.serialize(event).unwrap();
 
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn serialize_budget_created_rejects_unsupported_event() {
+    fn serialize_movement_created_rejects_unsupported_event() {
         let serializer = MovementCreatedEventSerializer;
         let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
         budget

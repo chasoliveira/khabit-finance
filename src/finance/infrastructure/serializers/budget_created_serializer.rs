@@ -10,7 +10,7 @@ use crate::finance::{
 pub struct BudgetCreatedEventSerializer;
 
 impl DomainEventSerializer for BudgetCreatedEventSerializer {
-    fn can_serializer(&self, event: &dyn DomainEvent) -> bool {
+    fn can_serialize(&self, event: &dyn DomainEvent) -> bool {
         event.as_any().is::<BudgetCreatedDomainEvent>()
     }
     fn serialize(&self, event: &dyn DomainEvent) -> Result<String, DomainEventSerializerError> {
@@ -25,13 +25,12 @@ impl DomainEventSerializer for BudgetCreatedEventSerializer {
 
 #[cfg(test)]
 mod tests {
-    use serde::{Serialize, ser::Error};
 
     use crate::finance::{
         domain::{
             account::AccountId,
             budgets::{budget::Budget, movements::movement::MovementType},
-            events::{domain_event_source::DomainEventSource, domain_events::DomainEvent},
+            events::domain_event_source::DomainEventSource,
             shared::{currency::Currency, money::Money},
         },
         infrastructure::serializers::{
@@ -39,6 +38,7 @@ mod tests {
             domain_event_serializer::{
                 DomainEventSerializer, DomainEventSerializerError, serialize_event,
             },
+            test_support::domain_failing_event::FailingEvent,
         },
     };
 
@@ -57,37 +57,13 @@ mod tests {
         assert_eq!(budget.movements().len(), 1);
 
         let event = budget.domain_events()[0].as_ref();
-        let result = serializer.can_serializer(event);
+        let result = serializer.can_serialize(event);
         assert!(result);
         let json = serializer.serialize(event).unwrap();
 
         let value: serde_json::Value = serde_json::from_str(&json).unwrap();
 
         assert_eq!(value["budget_id"], serde_json::json!(&budget.id()));
-    }
-
-    #[derive(Debug, Clone)]
-    struct FailingEvent;
-
-    impl Serialize for FailingEvent {
-        fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            Err(S::Error::custom("forced serialization failure"))
-        }
-    }
-
-    impl DomainEvent for FailingEvent {
-        fn event_name(&self) -> &'static str {
-            "FailingEvent"
-        }
-        fn clone_box(&self) -> Box<dyn DomainEvent> {
-            Box::new(self.clone())
-        }
-        fn as_any(&self) -> &dyn std::any::Any {
-            self
-        }
     }
 
     #[test]

@@ -8,7 +8,7 @@ pub enum DomainEventSerializerError {
     SerializationFailed,
 }
 pub trait DomainEventSerializer {
-    fn can_serializer(&self, event: &dyn DomainEvent) -> bool;
+    fn can_serialize(&self, event: &dyn DomainEvent) -> bool;
     fn serialize(&self, event: &dyn DomainEvent) -> Result<String, DomainEventSerializerError>;
 }
 
