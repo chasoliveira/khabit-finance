@@ -17,16 +17,20 @@ pub trait DomainEventExtractor {
     ) -> Result<Vec<OutboxMessage>, DomainEventSerializerError>;
 }
 
-pub struct OutboxDomainEventExtrator;
+pub struct OutboxDomainEventExtractor;
 
-impl DomainEventExtractor for OutboxDomainEventExtrator {
+impl DomainEventExtractor for OutboxDomainEventExtractor {
     fn extract_outbox_messages(
         &self,
         domain_event: &dyn DomainEventSource,
         registry: &DomainEventSerializerRegistry,
     ) -> Result<Vec<OutboxMessage>, DomainEventSerializerError> {
+        let mut error = None;
         let mut outbox_messages: Vec<OutboxMessage> = Vec::new();
         domain_event.visit_event_sources(&mut |event_source| {
+            if error.is_some() {
+                return;
+            }
             for event in event_source.domain_events() {
                 let item = registry.serialize(event.as_ref());
                 match item {
@@ -34,13 +38,16 @@ impl DomainEventExtractor for OutboxDomainEventExtrator {
                         outbox_messages
                             .push(OutboxMessage::new(event.event_name().to_string(), json));
                     }
-                    Err(_) => {}
+                    Err(err) => {
+                        error = Some(err);
+                        break;
+                    }
                 }
             }
         });
 
-        if outbox_messages.len() == 0 {
-            return Err(DomainEventSerializerError::SerializationFailed);
+        if let Some(err) = error {
+            return Err(err);
         }
 
         Ok(outbox_messages)
@@ -56,7 +63,7 @@ mod tests {
             shared::{currency::Currency, money::Money},
         },
         infrastructure::{
-            outbox::outbox_tanverser::{DomainEventExtractor, OutboxDomainEventExtrator},
+            outbox::outbox_traverser::{DomainEventExtractor, OutboxDomainEventExtractor},
             serializers::{
                 budget_created_serializer::BudgetCreatedEventSerializer,
                 domain_event_serializer::DomainEventSerializerError,
@@ -70,7 +77,7 @@ mod tests {
 
     #[test]
     fn extract_outbox_messages_success_when_multiple_visitor_locations() {
-        let tranverse_extractor = OutboxDomainEventExtrator;
+        let extractor = OutboxDomainEventExtractor;
         let mut registry = DomainEventSerializerRegistry::new();
         registry.register(BudgetCreatedEventSerializer);
         registry.register(MovementCreatedEventSerializer);
@@ -85,7 +92,7 @@ mod tests {
             )
             .unwrap();
 
-        let result = tranverse_extractor.extract_outbox_messages(&budget, &registry);
+        let result = extractor.extract_outbox_messages(&budget, &registry);
 
         assert!(result.is_ok());
         let outbox_messages = result.unwrap();
@@ -104,15 +111,15 @@ mod tests {
         assert_eq!(value["movement_id"], serde_json::json!(&movement_id));
     }
     #[test]
-    fn extract_outbox_messages_success_when_only_one_visitor_locattion() {
-        let tranverse_extractor = OutboxDomainEventExtrator;
+    fn extract_outbox_messages_success_when_only_one_visitor_location() {
+        let extractor = OutboxDomainEventExtractor;
         let mut registry = DomainEventSerializerRegistry::new();
         registry.register(BudgetCreatedEventSerializer);
         registry.register(MovementCreatedEventSerializer);
 
         let budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
 
-        let result = tranverse_extractor.extract_outbox_messages(&budget, &registry);
+        let result = extractor.extract_outbox_messages(&budget, &registry);
 
         assert!(result.is_ok());
         let outbox_messages = result.unwrap();
@@ -124,17 +131,41 @@ mod tests {
     }
     #[test]
     fn extract_outbox_messages_fails_when_no_registers() {
-        let tranverse_extractor = OutboxDomainEventExtrator;
+        let extractor = OutboxDomainEventExtractor;
         let registry = DomainEventSerializerRegistry::new();
         let budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
 
-        let result = tranverse_extractor.extract_outbox_messages(&budget, &registry);
+        let result = extractor.extract_outbox_messages(&budget, &registry);
 
         assert!(result.is_err());
         let outbox_message_error = result.unwrap_err();
         assert_eq!(
             outbox_message_error,
-            DomainEventSerializerError::SerializationFailed
+            DomainEventSerializerError::UnsupportedEvent
+        );
+    }
+    #[test]
+    fn extract_outbox_messages_fails_when_only_one_registers() {
+        let extractor = OutboxDomainEventExtractor;
+        let mut registry = DomainEventSerializerRegistry::new();
+        registry.register(BudgetCreatedEventSerializer);
+
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
+        budget
+            .create_movement(
+                &AccountId::new(),
+                MovementType::Credit,
+                Money::new(100, Currency::usa()),
+                None,
+            )
+            .unwrap();
+        let result = extractor.extract_outbox_messages(&budget, &registry);
+
+        assert!(result.is_err());
+        let outbox_message_error = result.unwrap_err();
+        assert_eq!(
+            outbox_message_error,
+            DomainEventSerializerError::UnsupportedEvent
         );
     }
 }
