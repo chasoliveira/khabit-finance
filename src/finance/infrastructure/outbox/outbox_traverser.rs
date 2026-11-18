@@ -60,6 +60,7 @@ mod tests {
         domain::{
             account::AccountId,
             budgets::{budget::Budget, movements::movement::MovementType},
+            events::domain_event_source::DomainEventSource,
             shared::{currency::Currency, money::Money},
         },
         infrastructure::{
@@ -167,5 +168,20 @@ mod tests {
             outbox_message_error,
             DomainEventSerializerError::UnsupportedEvent
         );
+    }
+    #[test]
+    fn extract_outbox_messages_returns_empty() {
+        let extractor = OutboxDomainEventExtractor;
+        let mut registry = DomainEventSerializerRegistry::new();
+        registry.register(BudgetCreatedEventSerializer);
+
+        let mut budget = Budget::new("Monthly expenses".to_string(), Currency::usa());
+        budget.clear_domain_events();
+
+        let result = extractor.extract_outbox_messages(&budget, &registry);
+
+        assert!(result.is_ok());
+        let outbox_messages = result.unwrap();
+        assert_eq!(outbox_messages.len(), 0);
     }
 }
