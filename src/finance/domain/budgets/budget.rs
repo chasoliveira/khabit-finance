@@ -87,15 +87,12 @@ impl Budget {
     pub fn id(&self) -> &BudgetId {
         &self.id
     }
-
     pub fn name(&self) -> &str {
         &self.name
     }
-
     pub fn currency(&self) -> &Currency {
         &self.currency
     }
-
     pub fn is_archived(&self) -> bool {
         self.is_archived
     }
@@ -105,16 +102,6 @@ impl Budget {
 
     pub fn archive(&mut self) {
         self.is_archived = true;
-    }
-
-    fn validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
-        if self.is_archived() {
-            return Err(BudgetError::Archived);
-        }
-        if self.currency() != amount.currency() {
-            return Err(BudgetError::CurrencyMismatch);
-        }
-        Ok(())
     }
 
     pub fn get_money(&self, amount_int_cents: i64) -> Money {
@@ -142,6 +129,16 @@ impl Budget {
         self.movements.push(movement);
 
         Ok(movement_id)
+    }
+
+    fn validate_movement_creation(&self, amount: &Money) -> Result<(), BudgetError> {
+        if self.is_archived() {
+            return Err(BudgetError::Archived);
+        }
+        if self.currency() != amount.currency() {
+            return Err(BudgetError::CurrencyMismatch);
+        }
+        Ok(())
     }
 }
 
