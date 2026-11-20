@@ -7,6 +7,7 @@ pub use finance::domain::account::{AccountError, AccountType};
 mod tests {
     use super::*;
     use crate::finance::{
+        application::unit_of_work_trait::UnitOfWork,
         domain::{
             account::Account,
             shared::{currency::Currency, money::Money},
@@ -38,7 +39,7 @@ mod tests {
         );
         assert_eq!(result, Ok(Money::new(500, Currency::brl())));
 
-        transaction.commit();
+        transaction.commit().unwrap();
 
         let stored_account = db
             .accounts()

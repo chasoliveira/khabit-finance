@@ -84,7 +84,7 @@ mod tests {
 
         assert_eq!(result, Ok(Money::new(500, Currency::brl())));
 
-        transaction.commit();
+        transaction.commit().unwrap();
 
         let stored_account = db
             .accounts()

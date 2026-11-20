@@ -100,7 +100,7 @@ mod tests {
                 fake_unit_of_work::FakeUnitOfWork,
                 test_helper::{new_account, new_account_brl, new_budget_brl},
             },
-            unit_of_work_trait::UnitOfWorkError,
+            unit_of_work_trait::{UnitOfWork, UnitOfWorkError},
             use_cases::create_movement_in_budget::{
                 BudgetMovementError, create_movement_in_budget,
             },
@@ -141,7 +141,7 @@ mod tests {
 
         assert_matches!(result, Ok(_));
 
-        transaction.commit();
+        transaction.commit().unwrap();
 
         let stored_budget = db
             .budgets()

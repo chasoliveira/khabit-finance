@@ -35,7 +35,7 @@ impl<'db> InMemoryUnitOfWork<'db> {
         &mut self.working
     }
 
-    pub fn commit(&mut self) {
+    pub fn apply_changes(&mut self) {
         *self.original = self.working.clone();
     }
 }
@@ -78,7 +78,7 @@ impl<'db> UnitOfWork for InMemoryUnitOfWork<'db> {
     }
 
     fn commit(&mut self) -> Result<(), Self::Error> {
-        self.commit();
+        self.apply_changes();
         Ok(())
     }
 }
@@ -105,7 +105,7 @@ mod tests {
         {
             let mut transaction = InMemoryUnitOfWork::begin(&mut database);
             transaction.database_mut().add_account(account);
-            transaction.commit();
+            transaction.apply_changes();
         }
 
         assert!(
@@ -145,7 +145,7 @@ mod tests {
                 ))
                 .unwrap();
 
-            transaction.commit();
+            transaction.apply_changes();
         }
 
         assert_eq!(database.outbox_messages().len(), 1);
