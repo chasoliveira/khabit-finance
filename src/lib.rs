@@ -1,18 +1,19 @@
 pub mod finance;
 
-pub use finance::application::withdraw_use_case::withdraw_from_account;
+pub use finance::application::use_cases::withdraw_use_case::withdraw_from_account;
 pub use finance::domain::account::{AccountError, AccountType};
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::finance::{
-        application::account_repository_trait::AccountRepository,
         domain::{
             account::Account,
             shared::{currency::Currency, money::Money},
         },
-        infrastructure::in_memory_account_repository::InMemoryAccountRepository,
+        infrastructure::contexts::{
+            in_memory_database::InMemoryDatabase, in_memory_unit_of_work::InMemoryUnitOfWork,
+        },
     };
 
     #[test]
@@ -22,19 +23,29 @@ mod tests {
             AccountType::Checking,
             Currency::brl(),
         );
-        let id = account.id().clone();
-        let repository = &mut InMemoryAccountRepository::new();
-        {
-            account.deposit(&Money::new(1000, Currency::brl())).unwrap();
-            repository.add(account);
-        }
+        account.deposit(&Money::new(1000, Currency::brl())).unwrap();
 
-        let result = withdraw_from_account(repository, &id, Money::new(500, Currency::brl()));
+        let account_id = account.id().clone();
+        let mut db = InMemoryDatabase::new();
+
+        let mut transaction = InMemoryUnitOfWork::begin(&mut db);
+
+        transaction.database_mut().add_account(account);
+        let result = withdraw_from_account(
+            &mut transaction,
+            &account_id,
+            Money::new(500, Currency::brl()),
+        );
         assert_eq!(result, Ok(Money::new(500, Currency::brl())));
 
-        {
-            let existing_account = repository.find_by_id(&id).unwrap().unwrap();
-            assert_eq!(existing_account.balance().amount_in_cents(), 500);
-        }
+        transaction.commit();
+
+        let stored_account = db
+            .accounts()
+            .iter()
+            .find(|stored| stored.id() == &account_id)
+            .expect("account should have been persisted");
+
+        assert_eq!(stored_account.balance().amount_in_cents(), 500);
     }
 }

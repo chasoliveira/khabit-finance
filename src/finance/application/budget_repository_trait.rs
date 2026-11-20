@@ -7,6 +7,8 @@ pub enum BudgetRepositoryError {
 }
 
 pub trait BudgetRepository {
-    fn find_by_id(&self, id: &BudgetId) -> Result<Option<Budget>, BudgetRepositoryError>;
-    fn update(&mut self, budget: Budget) -> Result<(), BudgetRepositoryError>;
+    type Error;
+
+    fn find_by_id(&self, id: &BudgetId) -> Result<Option<Budget>, Self::Error>;
+    fn update(&mut self, budget: Budget) -> Result<(), Self::Error>;
 }

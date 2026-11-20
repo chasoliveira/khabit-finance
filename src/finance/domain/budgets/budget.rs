@@ -146,7 +146,7 @@ impl Budget {
 mod tests {
     use uuid::Version;
 
-    use crate::finance::application::test_support::domain_event_test_helper::{
+    use crate::finance::application::test_support::test_helper::{
         clear_all_events, collect_event_names,
     };
 

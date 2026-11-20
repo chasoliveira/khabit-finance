@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct OutboxMessage {
     event_name: String,
     payload: String,

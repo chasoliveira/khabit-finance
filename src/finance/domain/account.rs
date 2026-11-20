@@ -50,7 +50,7 @@ impl AccountType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Account {
     id: AccountId,
     name: String,
@@ -151,8 +151,14 @@ impl Account {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::finance::application::test_support::fake_account_repository::new_account_brl;
+    use crate::{
+        AccountError, AccountType,
+        finance::{
+            application::test_support::test_helper::new_account_brl,
+            domain::shared::{currency::Currency, money::Money},
+        },
+    };
+
     use uuid::Version;
 
     #[test]

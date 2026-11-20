@@ -2,42 +2,45 @@ use crate::finance::application::account_repository_trait::{
     AccountRepository, AccountRepositoryError,
 };
 use crate::finance::domain::account::{Account, AccountId};
+use crate::finance::infrastructure::contexts::in_memory_database::InMemoryDatabase;
 
-pub struct InMemoryAccountRepository {
-    // This is a placeholder for the in-memory storage of accounts.
-    // In a real implementation, you might use a HashMap or another data structure.
-    // For simplicity, we'll just use a vector here.
-    accounts: Vec<Account>,
+pub struct InMemoryAccountRepository<'db> {
+    db: &'db mut InMemoryDatabase,
 }
 
-impl InMemoryAccountRepository {
-    pub fn new() -> Self {
-        InMemoryAccountRepository {
-            accounts: Vec::new(),
-        }
+impl<'db> InMemoryAccountRepository<'db> {
+    pub fn new(db: &'db mut InMemoryDatabase) -> Self {
+        InMemoryAccountRepository { db }
     }
 
     pub fn add(&mut self, account: Account) {
-        self.accounts.push(account);
+        self.db.add_account(account);
+    }
+    pub fn list(&self) -> &[Account] {
+        self.db.accounts()
     }
 }
 
-impl AccountRepository for InMemoryAccountRepository {
-    fn find_by_id(&self, id: &AccountId) -> Result<Option<Account>, AccountRepositoryError> {
+impl<'db> AccountRepository for InMemoryAccountRepository<'db> {
+    type Error = AccountRepositoryError;
+
+    fn find_by_id(&self, id: &AccountId) -> Result<Option<Account>, Self::Error> {
         Ok(self
-            .accounts
+            .db
+            .accounts()
             .iter()
             .find(|account| account.id() == id)
             .cloned())
     }
 
-    fn update(&mut self, account: Account) -> Result<(), AccountRepositoryError> {
+    fn update(&mut self, account: Account) -> Result<(), Self::Error> {
         if let Some(pos) = self
-            .accounts
+            .db
+            .accounts()
             .iter()
             .position(|acc| acc.id() == account.id())
         {
-            self.accounts[pos] = account;
+            self.db.update_account(pos, account);
             Ok(())
         } else {
             return Err(AccountRepositoryError::UpdateFailed);
@@ -54,7 +57,8 @@ mod tests {
 
     #[test]
     fn test_add_account() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let mut repository = InMemoryAccountRepository::new(&mut db);
         let new_account = Account::new(
             "Test Account".to_string(),
             AccountType::Checking,
@@ -62,12 +66,13 @@ mod tests {
         );
 
         repository.add(new_account);
-        assert_eq!(repository.accounts.len(), 1);
+        assert_eq!(repository.list().len(), 1);
     }
 
     #[test]
     fn test_find_by_id() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let mut repository = InMemoryAccountRepository::new(&mut db);
         let new_account = Account::new(
             "Test Account".to_string(),
             AccountType::Checking,
@@ -82,7 +87,8 @@ mod tests {
 
     #[test]
     fn test_find_by_id_returns_some() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let mut repository = InMemoryAccountRepository::new(&mut db);
         let new_account = Account::new(
             "Test Account".to_string(),
             AccountType::Checking,
@@ -98,14 +104,16 @@ mod tests {
 
     #[test]
     fn test_find_by_id_returns_none() {
-        let repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let repository = InMemoryAccountRepository::new(&mut db);
         let account = repository.find_by_id(&AccountId::new()).unwrap();
         assert!(account.is_none());
     }
 
     #[test]
     fn test_update_ok() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let mut repository = InMemoryAccountRepository::new(&mut db);
         let account = Account::new(
             "Test Account".to_string(),
             AccountType::Checking,
@@ -119,7 +127,8 @@ mod tests {
 
     #[test]
     fn test_update_error() {
-        let mut repository = InMemoryAccountRepository::new();
+        let mut db = InMemoryDatabase::new();
+        let mut repository = InMemoryAccountRepository::new(&mut db);
         let account = Account::new(
             "Test Account".to_string(),
             AccountType::Checking,
