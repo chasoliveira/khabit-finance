@@ -1,7 +1,9 @@
-use crate::finance::domain::{
-    account::{Account, AccountId},
-    budgets::budget::{Budget, BudgetId},
-    outbox::outbox_message::OutboxMessage,
+use crate::finance::{
+    domain::{
+        account::{Account, AccountId},
+        budgets::budget::{Budget, BudgetId},
+    },
+    infrastructure::outbox::outbox_message::OutboxMessage,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

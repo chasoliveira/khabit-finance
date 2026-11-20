@@ -1,10 +1,11 @@
 use crate::finance::{
-    domain::{
-        events::domain_event_source::DomainEventSource, outbox::outbox_message::OutboxMessage,
-    },
-    infrastructure::serializers::{
-        domain_event_serializer::DomainEventSerializerError,
-        domain_event_serializer_registry::{DomainEventSerializerRegistry, SerializerRegistry},
+    domain::events::domain_event_source::DomainEventSource,
+    infrastructure::{
+        outbox::outbox_message::OutboxMessage,
+        serializers::{
+            domain_event_serializer::DomainEventSerializerError,
+            domain_event_serializer_registry::{DomainEventSerializerRegistry, SerializerRegistry},
+        },
     },
 };
 

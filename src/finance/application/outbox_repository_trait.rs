@@ -1,4 +1,4 @@
-use crate::finance::domain::outbox::outbox_message::OutboxMessage;
+use crate::finance::infrastructure::outbox::outbox_message::OutboxMessage;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OutboxRepositoryError {

@@ -3,8 +3,8 @@ use crate::finance::{
     domain::{
         account::{Account, AccountId},
         budgets::budget::{Budget, BudgetId},
-        outbox::outbox_message::OutboxMessage,
     },
+    infrastructure::outbox::outbox_message::OutboxMessage,
 };
 
 pub struct FakeUnitOfWork {

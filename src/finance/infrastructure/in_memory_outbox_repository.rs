@@ -1,7 +1,8 @@
 use crate::finance::{
     application::outbox_repository_trait::{OutboxRepository, OutboxRepositoryError},
-    domain::outbox::outbox_message::OutboxMessage,
-    infrastructure::contexts::in_memory_database::InMemoryDatabase,
+    infrastructure::{
+        contexts::in_memory_database::InMemoryDatabase, outbox::outbox_message::OutboxMessage,
+    },
 };
 
 pub struct InMemoryOutboxRepository<'db> {

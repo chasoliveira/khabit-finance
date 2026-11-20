@@ -8,13 +8,13 @@ use crate::finance::{
     domain::{
         account::{Account, AccountId},
         budgets::budget::{Budget, BudgetId},
-        outbox::outbox_message::OutboxMessage,
     },
     infrastructure::{
         contexts::in_memory_database::InMemoryDatabase,
         in_memory_account_repository::InMemoryAccountRepository,
         in_memory_budget_repository::InMemoryBudgetRepository,
         in_memory_outbox_repository::InMemoryOutboxRepository,
+        outbox::outbox_message::OutboxMessage,
     },
 };
 
@@ -78,6 +78,7 @@ impl<'db> UnitOfWork for InMemoryUnitOfWork<'db> {
     }
 
     fn commit(&mut self) -> Result<(), Self::Error> {
+        //TODO:
         self.apply_changes();
         Ok(())
     }
