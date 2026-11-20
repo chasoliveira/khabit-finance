@@ -38,7 +38,7 @@ impl<'db> BudgetRepository for InMemoryBudgetRepository<'db> {
             .db
             .budgets()
             .iter()
-            .position(|bgt| bgt.id() == budget.id() && !bgt.is_archived())
+            .position(|bgt| bgt.id() == budget.id())
         {
             self.db.update_budget(pos, budget);
             Ok(())
